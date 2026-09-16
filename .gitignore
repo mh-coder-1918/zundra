@@ -1,0 +1,27 @@
+# OS / editor
+.DS_Store
+*.swp
+
+# Env / secrets
+.env
+.env.*
+
+# Your task data — the app keeps these in ~/Library/Application Support/Zundra,
+# never in the repo. Ignored here too, as a safety net, so personal tasks, areas
+# and completion history can't be committed by accident.
+tasks.json
+areas.json
+completed.json
+archive.json
+planning.json
+
+# Build output
+build/
+.build/
+Info.plist
+
+# Agent instructions — kept locally, not published
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+.claude/
