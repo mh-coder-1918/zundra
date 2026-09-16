@@ -1,0 +1,13 @@
+:root {
+ --z-white: #FFFFFF;
+ --z-pink: #FF3D95;
+ --z-ink: #171217;
+ --z-blush: #FFF0F6;
+ --z-berry: #AC1552;
+ --z-grey: #6B5D65;
+ --z-line: #E4D8DF;
+ --z-brand-slant: -12deg;
+ --z-control-radius: 8px;
+ --z-panel-radius: 16px;
+}
+/* Supplied logo SVG already contains the slant. Do not skew it twice. Keep functional text upright. */

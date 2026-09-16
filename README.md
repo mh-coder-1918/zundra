@@ -1,3 +1,5 @@
+[![Zundra](docs/brand/readme-banner.png)](https://github.com/mh-coder-1918/zundra)
+
 # Zundra
 
 A menu-bar to-do app for macOS that plans your week and helps you work through it. Click the brain glyph in your menu bar, type a task, press **Return**. No Dock icon, no window, no account, no server, no network.

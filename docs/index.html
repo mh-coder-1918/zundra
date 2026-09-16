@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zundra — a weekly to-do list in your Mac's menu bar</title>
+<meta name="description" content="A menu-bar to-do app for macOS that plans your week and helps you work through it. No account, no server, no network. Apache-2.0.">
+<meta property="og:title" content="Zundra">
+<meta property="og:description" content="A menu-bar to-do app for macOS that plans your week and helps you work through it.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mh-coder-1918.github.io/zundra/">
+<meta property="og:image" content="https://mh-coder-1918.github.io/zundra/brand/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<style>
+  /* ---------------------------------------------------------------------
+     Zundra / Pink Noise / Edition 02
+     Colour, radius and spacing come straight from tokens/design-tokens.json.
+     The wordmark carries its 12° slant inside the SVG — never skew it in CSS.
+     --------------------------------------------------------------------- */
+  :root {
+    --white:#FFFFFF;
+    --pink:#FF3D95;
+    --ink:#171217;
+    --blush:#FFF0F6;
+    --berry:#AC1552;
+    --grey:#6B5D65;
+    --line:#E4D8DF;
+
+    --bg: var(--white);
+    --surface: var(--blush);
+    --fg: var(--ink);
+    --muted: var(--grey);
+    --rule: var(--line);
+    --link: var(--berry);
+    --panel-bg: var(--white);
+    --panel-field:#F4EFF2;
+    --shadow: 0 24px 60px rgba(23,18,23,.18);
+
+    --radius-control:8px;
+    --radius-panel:16px;
+    --step:120ms;
+    --step-panel:180ms;
+
+    --page: 1120px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#120E12;
+      --surface:#1D161C;
+      --fg:#FBEFF4;
+      --muted:#B3A0A9;
+      --rule:#342A31;
+      --link: var(--pink);
+      --panel-bg:#241C22;
+      --panel-field:#31262E;
+      --shadow: 0 24px 60px rgba(0,0,0,.5);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#120E12;
+    --surface:#1D161C;
+    --fg:#FBEFF4;
+    --muted:#B3A0A9;
+    --rule:#342A31;
+    --link: var(--pink);
+    --panel-bg:#241C22;
+    --panel-field:#31262E;
+    --shadow: 0 24px 60px rgba(0,0,0,.5);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 17px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  img, svg { max-width: 100%; }
+  a { color: var(--link); text-underline-offset: 3px; }
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+
+  .wrap { width: 100%; max-width: var(--page); margin-inline: auto; padding-inline: 20px; }
+  .rule { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+
+  /* --- masthead ------------------------------------------------------- */
+  .masthead {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: saturate(140%) blur(10px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .masthead .wrap { display: flex; align-items: center; gap: 24px; padding-block: 14px; }
+  .lockup { display: flex; align-items: center; gap: 12px; color: var(--fg); text-decoration: none; }
+  .lockup .brain { width: 30px; height: 30px; flex: none; }
+  .lockup .wordmark { height: 22px; width: auto; }
+  .nav { margin-left: auto; display: flex; align-items: center; gap: 22px; font-size: 15px; }
+  .nav a { color: var(--muted); text-decoration: none; }
+  .nav a:hover { color: var(--fg); }
+  .nav .gh {
+    color: var(--ink); background: var(--pink);
+    padding: 8px 14px; border-radius: var(--radius-control); font-weight: 650;
+    transition: transform var(--step) ease;
+  }
+  .nav .gh:hover { color: var(--ink); transform: translateX(2px); }
+  @media (max-width: 640px) { .nav .hide-sm { display: none; } }
+
+  /* --- hero ------------------------------------------------------------ */
+  .hero { background: var(--pink); color: var(--ink); overflow: hidden; }
+  .hero .wrap {
+    display: grid; grid-template-columns: minmax(0,1fr) minmax(0,420px);
+    gap: 56px; align-items: center; padding-block: 56px 0;
+  }
+  .hero h1 {
+    margin: 0 0 20px;
+    font-size: clamp(2.3rem, 4.4vw, 3.5rem);
+    line-height: 1.0; letter-spacing: -.035em; font-weight: 800;
+    max-width: 16ch; text-wrap: balance;
+  }
+  .hero p.lede { margin: 0 0 28px; font-size: clamp(1.05rem, 1.6vw, 1.25rem); max-width: 34ch; }
+  .eyebrow {
+    font-size: 13px; font-weight: 650; letter-spacing: .16em; text-transform: uppercase;
+    margin: 0 0 22px;
+  }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 20px; border-radius: var(--radius-control);
+    font-weight: 650; font-size: 16px; text-decoration: none;
+    transition: transform var(--step) ease, background var(--step) ease;
+  }
+  .btn-solid { background: var(--ink); color: var(--white); }
+  .btn-solid:hover { transform: translateY(-2px); }
+  .btn-ghost { border: 2px solid var(--ink); color: var(--ink); }
+  .btn-ghost:hover { background: rgba(23,18,23,.08); }
+  .hero .meta { margin: 22px 0 64px; font-size: 14.5px; opacity: .75; }
+  .hero-art { align-self: end; justify-self: center; padding-top: 24px; }
+  @media (max-width: 900px) {
+    .hero .wrap { grid-template-columns: minmax(0,1fr); gap: 36px; padding-block: 56px 0; }
+    .hero .meta { margin-bottom: 8px; }
+    .hero-art { justify-self: stretch; }
+  }
+
+  /* --- the panel drawing ---------------------------------------------- */
+  .panel {
+    width: 100%; max-width: 420px; margin-inline: auto;
+    background: var(--panel-bg); color: var(--fg);
+    border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+    box-shadow: var(--shadow);
+    font-size: 12.5px; line-height: 1.35;
+    padding: 12px 12px 0;
+    transform: translateY(6px);
+  }
+  .panel .seg {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 3px;
+    background: var(--panel-field); border-radius: 7px; padding: 3px; margin-bottom: 10px;
+  }
+  .panel .seg span { text-align: center; padding: 4px 0; border-radius: 5px; color: var(--muted); }
+  .panel .seg .on { background: var(--panel-bg); color: var(--fg); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  .panel .field {
+    background: var(--panel-field); border-radius: 6px; padding: 7px 9px; color: var(--muted); margin-bottom: 8px;
+  }
+  .panel .pickers { display: flex; gap: 6px; margin-bottom: 10px; }
+  .panel .days { display: flex; gap: 2px; background: var(--panel-field); border-radius: 6px; padding: 2px; flex: 1; }
+  .panel .days span { flex: 1; text-align: center; padding: 3px 0; border-radius: 4px; color: var(--muted); font-size: 11px; }
+  .panel .days .on { background: var(--pink); color: var(--ink); font-weight: 700; }
+  .panel .lbtn {
+    width: 26px; display: grid; place-items: center; border-radius: 6px;
+    border: 1px solid color-mix(in srgb, #8E5CD9 45%, transparent); color: #8E5CD9; font-weight: 700; font-size: 11px;
+  }
+  .panel .quads { display: flex; gap: 4px; }
+  .panel .quads span {
+    width: 22px; height: 22px; display: grid; place-items: center; border-radius: 6px; font-size: 11px;
+    border: 1px solid var(--rule); color: var(--muted);
+  }
+  .panel .quads .q-now { color: #E0243C; border-color: color-mix(in srgb, #E0243C 45%, transparent); }
+  .panel hr { border: 0; border-top: 1px solid var(--rule); margin: 10px -12px; }
+  .panel .head {
+    display: flex; align-items: center; gap: 8px; font-weight: 650; padding: 4px 2px;
+  }
+  .panel .head .name { color: var(--muted); }
+  .panel .head.today .name { color: var(--pink); }
+  .panel .head .count { color: var(--muted); font-weight: 400; }
+  .panel .head .tally { margin-left: auto; color: #1E9E5A; font-weight: 600; }
+  .panel .row { display: flex; align-items: center; gap: 7px; padding: 5px 2px; }
+  .panel .grip, .panel .circle { color: color-mix(in srgb, var(--muted) 70%, transparent); }
+  .panel .badge { width: 10px; text-align: center; font-weight: 700; }
+  .panel .b-now { color: #E0243C; }
+  .panel .b-sched { color: #2F6FE0; }
+  .panel .b-del { color: var(--muted); }
+  .panel .b-none { color: color-mix(in srgb, var(--muted) 35%, transparent); }
+  /* The real panel keeps the quadrant slot empty until the pointer is over the
+     row, so the seeded planning task shows no badge at rest. */
+  .panel .b-off { visibility: hidden; }
+  .panel .cap {
+    font-size: 10.5px; padding: 1px 6px; border-radius: 999px; border: 1px solid;
+  }
+  .panel .cap-sales { color: var(--fg); background: rgba(46,160,90,.16); border-color: rgba(46,160,90,.45); }
+  .panel .cap-admin { color: var(--fg); background: rgba(47,111,224,.16); border-color: rgba(47,111,224,.45); }
+  .panel .cap-hiring { color: var(--fg); background: rgba(224,140,20,.16); border-color: rgba(224,140,20,.45); }
+  .panel .text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .panel .plan { color: #E08C14; font-weight: 600; }
+  .panel .run { color: color-mix(in srgb, var(--muted) 75%, transparent); font-size: 11px; }
+  .panel .clock { color: var(--pink); font-variant-numeric: tabular-nums; font-weight: 600; font-size: 11px; }
+  .panel .clock.agent { color: #1B9A96; }
+  .panel .lt { color: #8E5CD9; }
+  .figcap { margin: 14px 0 0; font-size: 12.5px; color: var(--ink); opacity: .7; text-align: center; }
+
+  /* --- generic sections ------------------------------------------------ */
+  section { padding-block: 72px; }
+  .kicker {
+    font-size: 12.5px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 18px;
+  }
+  h2 {
+    margin: 0 0 18px; font-size: clamp(1.9rem, 3.6vw, 2.9rem);
+    line-height: 1.04; letter-spacing: -.03em; font-weight: 800; text-wrap: balance;
+  }
+  h3 { margin: 0 0 8px; font-size: 1.12rem; font-weight: 700; letter-spacing: -.01em; }
+  p { margin: 0 0 16px; }
+  .prose { max-width: 62ch; }
+  .muted { color: var(--muted); }
+
+  .four { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1px; background: var(--rule); margin-top: 40px; }
+  .four > div { background: var(--bg); padding: 28px 26px 30px; }
+  .four .mark { display: block; width: 26px; height: 3px; background: var(--pink); margin-bottom: 18px; }
+  .four p { margin: 0; color: var(--muted); font-size: 15.5px; }
+  @media (max-width: 720px) { .four { grid-template-columns: minmax(0,1fr); } }
+
+  .spaces { background: var(--surface); }
+  .spaces .wrap { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,320px); gap: 48px; align-items: center; }
+  .switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--bg); border-radius: 10px; padding: 6px; border: 1px solid var(--rule); }
+  .switch span { text-align: center; padding: 10px 0; border-radius: 7px; font-weight: 600; color: var(--muted); }
+  .switch .on { background: var(--pink); color: var(--ink); }
+  @media (max-width: 760px) { .spaces .wrap { grid-template-columns: minmax(0,1fr); gap: 28px; } }
+
+  .feats { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 34px 40px; margin-top: 40px; }
+  .feats h3 { display: flex; align-items: baseline; gap: 8px; }
+  .feats .key {
+    font: 600 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 5px; padding: 1px 6px; color: var(--berry);
+  }
+  .feats p { margin: 0; color: var(--muted); font-size: 15.5px; }
+  @media (max-width: 900px) { .feats { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  @media (max-width: 600px) { .feats { grid-template-columns: minmax(0,1fr); } }
+
+  .build { background: var(--ink); color: var(--blush); }
+  .build h2, .build h3 { color: var(--white); }
+  .build .wrap { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 56px; align-items: start; }
+  .build p { color: #C9B6BF; }
+  .build .kicker { color: var(--pink); }
+  .build a { color: var(--pink); }
+  pre {
+    margin: 0 0 20px; padding: 20px; overflow-x: auto;
+    background: #221A20; border-left: 3px solid var(--pink); border-radius: 0 var(--radius-control) var(--radius-control) 0;
+    font: 13.5px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; color: #F6E9EF;
+  }
+  pre .p { color: var(--pink); }
+  pre .c { color: #9C8792; }
+  .build ul { margin: 0 0 20px; padding-left: 18px; color: #C9B6BF; }
+  .build li { margin-bottom: 6px; }
+  .build li strong { color: var(--white); }
+  @media (max-width: 860px) { .build .wrap { grid-template-columns: minmax(0,1fr); gap: 36px; } }
+
+  .privacy .wrap { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 56px; align-items: center; }
+  .privacy .halftone { position: relative; }
+  .privacy .halftone svg { width: 100%; height: auto; color: var(--pink); opacity: .9; }
+  @media (max-width: 860px) { .privacy .wrap { grid-template-columns: minmax(0,1fr); } .privacy .halftone { max-width: 320px; } }
+
+  .files {
+    white-space: pre; font: 13px/1.85 ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius-control);
+    padding: 18px 20px; overflow-x: auto; color: var(--fg); margin: 0 0 20px;
+  }
+  .files .c { color: var(--muted); }
+
+  footer { border-top: 1px solid var(--rule); padding-block: 44px 56px; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 20px 40px; align-items: center; }
+  footer .lockup .wordmark { height: 18px; }
+  footer p { margin: 0; font-size: 14.5px; color: var(--muted); max-width: 46ch; }
+  footer .links { margin-left: auto; display: flex; gap: 20px; font-size: 14.5px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Brand artwork, inlined so the page is one file. The wordmark's 12° slant
+     lives in its own path data: never skew it again in CSS. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="brain" viewBox="0 0 512 512">
+    <g transform="translate(0 -22)">
+      <g fill="none" stroke="currentColor" stroke-width="34" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M244 106 C219 73 157 92 154 143 C111 147 84 190 101 228 C63 254 58 310 90 344 C70 391 103 438 155 433 C170 477 233 473 244 421 Z"/>
+        <path d="M268 106 C293 73 355 92 358 143 C401 147 428 190 411 228 C449 254 454 310 422 344 C442 391 409 438 357 433 C342 477 279 473 268 421 Z"/>
+        <path d="M256 112 V420"/>
+      </g>
+    </g>
+  </symbol>
+  <symbol id="wordmark" viewBox="0 0 609.11 204">
+    <g transform="translate(12 12) scale(0.11356466876971609) translate(-62.56 1556)">
+      <path fill="currentColor" d="M317.62334907042475 -1120H981.9833490704249L928.8442086529193 -870L397.1344797875257 -256H798.3344797875258L743.9200000000001 0H62.56L115.69914041750553 -250L647.4088692828991 -864H263.2088692828991ZM961.0346608881298 -436 1106.4233490704248 -1120H1351.2233490704248L1327.4170141633824 -1008Q1308.0743670514103 -917 1278.1678398217823 -779.5Q1248.2613125921544 -642 1238.4837107553333 -596Q1209.7885749298803 -461 1201.901459510514 -401.5Q1194.0143440911477 -342 1199.8353169260572 -315Q1207.3558372676061 -280 1227.4572625958758 -261.0Q1247.5586879241455 -242 1278.8386879241455 -242Q1354.9986879241455 -242 1416.7985522277675 -328.0Q1478.5984165313894 -414 1511.1195704669026 -567L1628.6633490704248 -1120H1872.1033490704249L1634.04 0H1390.6000000000001L1425.0341629905438 -162Q1349.1236199468815 -64 1277.6997398292256 -17.5Q1206.2758597115694 29 1132.1558597115695 29Q1000.2358597115694 29 956.510090550302 -90.0Q912.7843213890346 -209 961.0346608881298 -436ZM2727.6035750589554 -682 2582.6400000000003 0H2337.84L2361.4337783453725 -111L2448.7945251917517 -522Q2479.615226633905 -667 2486.885837525756 -722.0Q2494.156448417607 -777 2488.8029190210277 -803Q2481.9623986794786 -838 2461.627251632044 -857.5Q2441.2921045846097 -877 2410.0121045846095 -877Q2333.8521045846096 -877 2271.9459620001526 -790.5Q2210.0398194156955 -704 2177.5186654801823 -551L2060.4 0H1816.96L2055.023349070425 -1120H2298.4633490704246L2263.604072956541 -956Q2339.514616000203 -1054 2411.2784961178595 -1100.5Q2483.0423762355153 -1147 2557.8423762355155 -1147Q2689.762376235515 -1147 2732.8081453967825 -1028.0Q2775.8539145580503 -909 2727.6035750589554 -682ZM3478.764072956541 -956 3606.2980099585548 -1556H3851.0980099585545L3520.36 0H3275.56L3309.9941629905434 -162Q3238.6310633852117 -63 3168.333461548391 -17.0Q3098.0358597115696 29 3018.4758597115697 29Q2877.7158597115695 29 2822.241414106288 -135.5Q2766.766968501007 -300 2821.8191179735422 -559Q2876.871267446078 -818 3002.2768218407964 -982.5Q3127.682376235515 -1147 3268.4423762355154 -1147Q3347.3223762355155 -1147 3398.2984961178595 -1100.5Q3449.2746160002034 -1054 3478.764072956541 -956ZM3164.1805657457753 -231Q3242.380565745775 -231 3301.375316926057 -315.0Q3360.3700681063387 -399 3394.3791179735426 -559Q3428.388167840746 -719 3405.102919021028 -803.0Q3381.8176702013097 -887 3303.61767020131 -887Q3226.0976702013095 -887 3167.1029190210274 -803.0Q3108.108167840746 -719 3074.0991179735424 -559Q3040.090068106339 -399 3063.375316926057 -315.0Q3086.6605657457753 -231 3164.1805657457753 -231ZM4442.273597761068 -815Q4414.989842117809 -837 4385.601686015344 -847.5Q4356.2135299128795 -858 4324.2535299128795 -858Q4230.413529912879 -858 4160.942274205083 -769.5Q4091.4710184972855 -681 4056.3991858217314 -516L3946.7200000000003 0H3703.28L3941.343349070425 -1120H4184.783349070425L4145.672941723141 -936Q4215.974163506843 -1046 4287.568269871179 -1096.5Q4359.162376235516 -1147 4444.162376235516 -1147Q4456.4023762355155 -1147 4470.363541393011 -1145.5Q4484.324706550506 -1144 4510.461923742156 -1139ZM4787.568507081691 -504Q4711.408507081691 -504 4664.91135773823 -466.0Q4618.414208394769 -428 4602.685022831188 -354Q4588.231176637626 -286 4610.98774901333 -247.5Q4633.744321389035 -209 4688.824321389035 -209Q4757.504321389035 -209 4819.834672110112 -281.5Q4882.165022831188 -354 4905.333688053221 -463L4914.048507081691 -504ZM5188.2236429071445 -639 5052.4 0H4806.92L4842.204389237224 -166Q4771.563619946881 -64 4700.479739829225 -17.5Q4629.395859711569 29 4541.6758597115695 29Q4423.355859711569 29 4371.150350721076 -72.5Q4318.944841730584 -174 4353.379004721128 -336Q4395.252647370122 -533 4506.947851043764 -625.0Q4618.643054717406 -717 4815.843054717406 -717H4959.323054717406L4965.274638444166 -745Q4983.341946186119 -830 4946.177930372084 -869.5Q4909.01391455805 -909 4812.45391455805 -909Q4734.25391455805 -909 4662.04511363964 -886.0Q4589.836312721229 -863 4522.258710884408 -817L4580.286652220324 -1090Q4664.438235947085 -1118 4746.4003060913 -1132.5Q4828.3623762355155 -1147 4907.242376235516 -1147Q5113.282376235516 -1147 5179.341867115948 -1027.5Q5245.40135799638 -908 5188.2236429071445 -639Z"/>
+    </g>
+  </symbol>
+</svg>
+
+<header class="masthead">
+  <div class="wrap">
+    <a class="lockup" href="#top" aria-label="Zundra">
+      <svg class="brain" viewBox="0 0 512 512" aria-hidden="true"><use href="#brain"/></svg>
+      <svg class="wordmark" viewBox="0 0 609.11 204" role="img" aria-label="Zundra"><use href="#wordmark"/></svg>
+    </a>
+    <nav class="nav">
+      <a class="hide-sm" href="#why">Why</a>
+      <a class="hide-sm" href="#features">Features</a>
+      <a class="hide-sm" href="#build">Build it</a>
+      <a class="gh" href="https://github.com/mh-coder-1918/zundra">View on GitHub ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <p class="eyebrow">Local tasks / macOS</p>
+        <h1>A menu-bar to-do app for macOS that plans your week.</h1>
+        <p class="lede">Click the brain glyph in your menu bar, type a task, press <strong>Return</strong>. No Dock icon, no window, no account, no server, no network.</p>
+        <div class="cta-row">
+          <a class="btn btn-solid" href="https://github.com/mh-coder-1918/zundra">View on GitHub ↗</a>
+          <a class="btn btn-ghost" href="#build">Build Zundra</a>
+        </div>
+        <p class="meta">macOS 13 or later · Apache-2.0 · builds from source in a few seconds</p>
+      </div>
+      <figure class="hero-art" style="margin:0">
+        <div class="panel" role="img" aria-label="A drawing of the Zundra panel: a Personal/Work switch, a capture field, the Mon–Sun day picker, and Tuesday's tasks with priority badges and area tags.">
+          <div class="seg"><span>Personal</span><span class="on">Work</span></div>
+          <div class="field">Add a task…</div>
+          <div class="pickers">
+            <div class="days"><span>Mon</span><span class="on">Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+            <div class="lbtn">L</div>
+          </div>
+          <div class="quads"><span class="q-now">!</span><span>↑</span><span>→</span><span>·</span></div>
+          <hr>
+          <div class="head today"><span class="name">Tuesday</span><span class="count">· 4 tasks</span><span class="tally">✓ 3</span></div>
+          <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-off">!</span><span class="text plan">Plan the day</span><span class="clock">09:12</span></div>
+          <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-now">!</span><span class="cap cap-sales">sales</span><span class="text">Send the proposal over</span><span class="run">▶</span></div>
+          <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-now">!</span><span class="cap cap-sales">sales</span><span class="text">Follow up on last week's call</span><span class="clock agent">47:30</span></div>
+          <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-sched">↑</span><span class="cap cap-admin">admin</span><span class="text">File August's receipts</span><span class="run">▶</span></div>
+          <div class="head"><span class="name">Wednesday</span><span class="count">· 1 task</span><span class="tally">✓ 1</span></div>
+          <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-del">→</span><span class="cap cap-hiring">hiring</span><span class="text">Brief the recruiter</span><span class="run">▶</span></div>
+          <div class="head lt"><span class="name lt">Long-term</span><span class="count">· 6 tasks</span></div>
+        </div>
+        <figcaption class="figcap">A drawing of the panel, not a screenshot.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="why">
+    <div class="wrap">
+      <p class="kicker">Why another to-do app</p>
+      <h2>Four ordinary ideas, one click each.</h2>
+      <div class="prose">
+        <p class="muted">Most to-do apps are a flat list, which is fine until the list is forty items long and every one of them looks equally urgent. Zundra puts four ordinary ideas about getting things done into one small panel, and makes them cost one click each.</p>
+      </div>
+      <div class="four">
+        <div>
+          <span class="mark"></span>
+          <h3>The week, not the day</h3>
+          <p>The list is split Monday→Sunday, so a task has a day rather than a vague someday. Anything that genuinely isn't for this week goes in a separate long-term bucket instead of rotting at the bottom.</p>
+        </div>
+        <div>
+          <span class="mark"></span>
+          <h3>The Eisenhower matrix, as one character</h3>
+          <p>Each task carries an optional <strong>!</strong> (do now), <strong>↑</strong> (schedule), <strong>→</strong> (delegate) or <strong>·</strong> (drop). Click to cycle it. The badge also <em>orders the day</em>, so triaging a list rearranges it.</p>
+        </div>
+        <div>
+          <span class="mark"></span>
+          <h3>Your own areas</h3>
+          <p>Type <code>#admin</code> at the start of a task and it becomes a coloured capsule instead of part of the text. Areas are your words, made by using them — no list to set up, none to maintain, and each one keeps a distinct colour for good.</p>
+        </div>
+        <div>
+          <span class="mark"></span>
+          <h3>Timeboxing</h3>
+          <p>Press ▶ on a task for a 20-minute focus box, or ✨ for a 60-minute box for something you've handed off and are waiting on. Several can run at once; the one finishing first shows next to the menu-bar icon.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="spaces">
+    <div class="wrap">
+      <div class="prose">
+        <p class="kicker">Personal / Work</p>
+        <h2>Two weeks, side by side.</h2>
+        <p class="muted">Two spaces keep two weeks apart, each with its own days, tallies and fold state, so an evening's list never gets crowded out by a work one. The switch sits at the top of the panel, and everything below it belongs to the space on show.</p>
+      </div>
+      <div class="switch" aria-hidden="true"><span>Personal</span><span class="on">Work</span></div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="wrap">
+      <p class="kicker">What's in the panel</p>
+      <h2>Small, and finished.</h2>
+      <div class="feats">
+        <div>
+          <h3>Instant capture</h3>
+          <p>Click the icon, type, press Return. The field clears and stays focused, so you can add several in a row.</p>
+        </div>
+        <div>
+          <h3>Edit in place</h3>
+          <p>Click a task's text and change it; edits save on Return or when you click away.</p>
+        </div>
+        <div>
+          <h3>Drag to reorder or reschedule</h3>
+          <p>Grab a task by its grip handle and drag it within a day, or onto another day's heading to move it there. Dragging across quadrants retags the row to match where you dropped it.</p>
+        </div>
+        <div>
+          <h3>Done tallies</h3>
+          <p>Each day heading shows what's left plus a green ✓ count of what you finished there this week. Click the tally to list those tasks, struck through, under the heading.</p>
+        </div>
+        <div>
+          <h3>Delete, properly</h3>
+          <p>A task captured by mistake isn't <em>done</em>, and marking it done would inflate the tally you're meant to trust. Both delete and complete give you about four seconds to undo.</p>
+        </div>
+        <div>
+          <h3>Search <span class="key">⌘F</span></h3>
+          <p>The week is replaced by the matches. Space-separated terms all have to match, in any order, across the text and the <code>#area</code>.</p>
+        </div>
+        <div>
+          <h3>Collapsible days</h3>
+          <p>Click a day heading to fold it shut; the choice is remembered per space.</p>
+        </div>
+        <div>
+          <h3>“Plan the day”</h3>
+          <p>A distinct orange task appears once each morning at the top of today, in the Work space. Tick it, edit it or delete it and it stays gone until tomorrow.</p>
+        </div>
+        <div>
+          <h3>Global shortcut <span class="key">⌃⌥⌘T</span></h3>
+          <p>Right-click the icon to enable a system-wide shortcut that opens Zundra from any app. Off by default, and it needs no Accessibility permission.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="build" id="build">
+    <div class="wrap">
+      <div>
+        <p class="kicker">Building it</p>
+        <h2>There is no signed download yet.</h2>
+        <p>Building takes a few seconds. You need macOS 13 (Ventura) or later and the Xcode <strong>Command Line Tools</strong> — <code>xcode-select --install</code>.</p>
+<pre><span class="p">$</span> git clone https://github.com/mh-coder-1918/zundra.git
+<span class="p">$</span> cd zundra
+<span class="p">$</span> ./scripts/build-app.sh --install --run</pre>
+        <p>That compiles the app, installs it to <strong>/Applications/Zundra.app</strong> and launches it. The brain icon appears in your menu bar.</p>
+      </div>
+      <div>
+        <h3>What the flags do</h3>
+        <ul>
+          <li><strong>no flags</strong> — build into <code>./build/Zundra.app</code> only</li>
+          <li><strong>--install</strong> — also copy it to <code>/Applications</code></li>
+          <li><strong>--install --run</strong> — also (re)launch it</li>
+        </ul>
+        <p>The app is <em>ad-hoc signed</em>, which needs no Apple Developer account and is enough to run on your own Mac. The build fails rather than continuing if signing fails — a broken signature is worse than no build, because macOS reports it as damaged rather than merely unverified.</p>
+        <p>There is no Xcode project. The app is compiled straight from <code>Sources/</code> by that script, so there is deliberately nothing to open in an IDE.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="privacy">
+    <div class="wrap">
+      <div class="prose">
+        <p class="kicker">Your data</p>
+        <h2>It stays in one folder on your Mac.</h2>
+        <pre class="files">
+~/Library/Application Support/Zundra/
+  tasks.json        <span class="c">the open tasks (one flat array)</span>
+  areas.json        <span class="c">each area's colour, assigned once and kept</span>
+  completed.json    <span class="c">this week's per-day ✓ counts</span>
+  archive.json      <span class="c">a record of completed tasks</span>
+  planning.json     <span class="c">when “Plan the day” was last seeded</span></pre>
+        <p class="muted">If one of those files is ever unreadable, Zundra will <strong>not</strong> overwrite it. It moves the file aside under a dated name, starts without it, and says so in a strip at the top of the panel — so a corrupt byte costs you a restore, not your list.</p>
+        <p class="muted">Zundra asks for nothing and connects to nothing: no accounts, no analytics, no crash reporting, no network calls of any kind. The global shortcut uses a Carbon hotkey, so even that needs no Accessibility permission.</p>
+      </div>
+      <div class="halftone" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="512" height="512" viewBox="0 0 512 512"><defs><mask id="b"><g transform="translate(0 -22)"><g fill="none" stroke="white" stroke-width="34" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M244 106
+      C219 73 157 92 154 143
+      C111 147 84 190 101 228
+      C63 254 58 310 90 344
+      C70 391 103 438 155 433
+      C170 477 233 473 244 421
+      Z"/>
+    <path d="M268 106
+      C293 73 355 92 358 143
+      C401 147 428 190 411 228
+      C449 254 454 310 422 344
+      C442 391 409 438 357 433
+      C342 477 279 473 268 421
+      Z"/>
+    <path d="M256 112 V420"/>
+  </g></g></mask></defs><g mask="url(#b)"><circle cx="0" cy="0" r="2.00"/><circle cx="12" cy="0" r="2.27"/><circle cx="24" cy="0" r="2.53"/><circle cx="36" cy="0" r="2.80"/><circle cx="48" cy="0" r="3.07"/><circle cx="60" cy="0" r="3.33"/><circle cx="72" cy="0" r="3.60"/><circle cx="84" cy="0" r="3.87"/><circle cx="96" cy="0" r="2.13"/><circle cx="108" cy="0" r="2.40"/><circle cx="120" cy="0" r="2.67"/><circle cx="132" cy="0" r="2.93"/><circle cx="144" cy="0" r="3.20"/><circle cx="156" cy="0" r="3.47"/><circle cx="168" cy="0" r="3.73"/><circle cx="180" cy="0" r="2.00"/><circle cx="192" cy="0" r="2.27"/><circle cx="204" cy="0" r="2.53"/><circle cx="216" cy="0" r="2.80"/><circle cx="228" cy="0" r="3.07"/><circle cx="240" cy="0" r="3.33"/><circle cx="252" cy="0" r="3.60"/><circle cx="264" cy="0" r="3.87"/><circle cx="276" cy="0" r="2.13"/><circle cx="288" cy="0" r="2.40"/><circle cx="300" cy="0" r="2.67"/><circle cx="312" cy="0" r="2.93"/><circle cx="324" cy="0" r="3.20"/><circle cx="336" cy="0" r="3.47"/><circle cx="348" cy="0" r="3.73"/><circle cx="360" cy="0" r="2.00"/><circle cx="372" cy="0" r="2.27"/><circle cx="384" cy="0" r="2.53"/><circle cx="396" cy="0" r="2.80"/><circle cx="408" cy="0" r="3.07"/><circle cx="420" cy="0" r="3.33"/><circle cx="432" cy="0" r="3.60"/><circle cx="444" cy="0" r="3.87"/><circle cx="456" cy="0" r="2.13"/><circle cx="468" cy="0" r="2.40"/><circle cx="480" cy="0" r="2.67"/><circle cx="492" cy="0" r="2.93"/><circle cx="504" cy="0" r="3.20"/><circle cx="0" cy="12" r="2.00"/><circle cx="12" cy="12" r="2.27"/><circle cx="24" cy="12" r="2.53"/><circle cx="36" cy="12" r="2.80"/><circle cx="48" cy="12" r="3.07"/><circle cx="60" cy="12" r="3.33"/><circle cx="72" cy="12" r="3.60"/><circle cx="84" cy="12" r="3.87"/><circle cx="96" cy="12" r="2.13"/><circle cx="108" cy="12" r="2.40"/><circle cx="120" cy="12" r="2.67"/><circle cx="132" cy="12" r="2.93"/><circle cx="144" cy="12" r="3.20"/><circle cx="156" cy="12" r="3.47"/><circle cx="168" cy="12" r="3.73"/><circle cx="180" cy="12" r="2.00"/><circle cx="192" cy="12" r="2.27"/><circle cx="204" cy="12" r="2.53"/><circle cx="216" cy="12" r="2.80"/><circle cx="228" cy="12" r="3.07"/><circle cx="240" cy="12" r="3.33"/><circle cx="252" cy="12" r="3.60"/><circle cx="264" cy="12" r="3.87"/><circle cx="276" cy="12" r="2.13"/><circle cx="288" cy="12" r="2.40"/><circle cx="300" cy="12" r="2.67"/><circle cx="312" cy="12" r="2.93"/><circle cx="324" cy="12" r="3.20"/><circle cx="336" cy="12" r="3.47"/><circle cx="348" cy="12" r="3.73"/><circle cx="360" cy="12" r="2.00"/><circle cx="372" cy="12" r="2.27"/><circle cx="384" cy="12" r="2.53"/><circle cx="396" cy="12" r="2.80"/><circle cx="408" cy="12" r="3.07"/><circle cx="420" cy="12" r="3.33"/><circle cx="432" cy="12" r="3.60"/><circle cx="444" cy="12" r="3.87"/><circle cx="456" cy="12" r="2.13"/><circle cx="468" cy="12" r="2.40"/><circle cx="480" cy="12" r="2.67"/><circle cx="492" cy="12" r="2.93"/><circle cx="504" cy="12" r="3.20"/><circle cx="0" cy="24" r="2.00"/><circle cx="12" cy="24" r="2.27"/><circle cx="24" cy="24" r="2.53"/><circle cx="36" cy="24" r="2.80"/><circle cx="48" cy="24" r="3.07"/><circle cx="60" cy="24" r="3.33"/><circle cx="72" cy="24" r="3.60"/><circle cx="84" cy="24" r="3.87"/><circle cx="96" cy="24" r="2.13"/><circle cx="108" cy="24" r="2.40"/><circle cx="120" cy="24" r="2.67"/><circle cx="132" cy="24" r="2.93"/><circle cx="144" cy="24" r="3.20"/><circle cx="156" cy="24" r="3.47"/><circle cx="168" cy="24" r="3.73"/><circle cx="180" cy="24" r="2.00"/><circle cx="192" cy="24" r="2.27"/><circle cx="204" cy="24" r="2.53"/><circle cx="216" cy="24" r="2.80"/><circle cx="228" cy="24" r="3.07"/><circle cx="240" cy="24" r="3.33"/><circle cx="252" cy="24" r="3.60"/><circle cx="264" cy="24" r="3.87"/><circle cx="276" cy="24" r="2.13"/><circle cx="288" cy="24" r="2.40"/><circle cx="300" cy="24" r="2.67"/><circle cx="312" cy="24" r="2.93"/><circle cx="324" cy="24" r="3.20"/><circle cx="336" cy="24" r="3.47"/><circle cx="348" cy="24" r="3.73"/><circle cx="360" cy="24" r="2.00"/><circle cx="372" cy="24" r="2.27"/><circle cx="384" cy="24" r="2.53"/><circle cx="396" cy="24" r="2.80"/><circle cx="408" cy="24" r="3.07"/><circle cx="420" cy="24" r="3.33"/><circle cx="432" cy="24" r="3.60"/><circle cx="444" cy="24" r="3.87"/><circle cx="456" cy="24" r="2.13"/><circle cx="468" cy="24" r="2.40"/><circle cx="480" cy="24" r="2.67"/><circle cx="492" cy="24" r="2.93"/><circle cx="504" cy="24" r="3.20"/><circle cx="0" cy="36" r="2.00"/><circle cx="12" cy="36" r="2.27"/><circle cx="24" cy="36" r="2.53"/><circle cx="36" cy="36" r="2.80"/><circle cx="48" cy="36" r="3.07"/><circle cx="60" cy="36" r="3.33"/><circle cx="72" cy="36" r="3.60"/><circle cx="84" cy="36" r="3.87"/><circle cx="96" cy="36" r="2.13"/><circle cx="108" cy="36" r="2.40"/><circle cx="120" cy="36" r="2.67"/><circle cx="132" cy="36" r="2.93"/><circle cx="144" cy="36" r="3.20"/><circle cx="156" cy="36" r="3.47"/><circle cx="168" cy="36" r="3.73"/><circle cx="180" cy="36" r="2.00"/><circle cx="192" cy="36" r="2.27"/><circle cx="204" cy="36" r="2.53"/><circle cx="216" cy="36" r="2.80"/><circle cx="228" cy="36" r="3.07"/><circle cx="240" cy="36" r="3.33"/><circle cx="252" cy="36" r="3.60"/><circle cx="264" cy="36" r="3.87"/><circle cx="276" cy="36" r="2.13"/><circle cx="288" cy="36" r="2.40"/><circle cx="300" cy="36" r="2.67"/><circle cx="312" cy="36" r="2.93"/><circle cx="324" cy="36" r="3.20"/><circle cx="336" cy="36" r="3.47"/><circle cx="348" cy="36" r="3.73"/><circle cx="360" cy="36" r="2.00"/><circle cx="372" cy="36" r="2.27"/><circle cx="384" cy="36" r="2.53"/><circle cx="396" cy="36" r="2.80"/><circle cx="408" cy="36" r="3.07"/><circle cx="420" cy="36" r="3.33"/><circle cx="432" cy="36" r="3.60"/><circle cx="444" cy="36" r="3.87"/><circle cx="456" cy="36" r="2.13"/><circle cx="468" cy="36" r="2.40"/><circle cx="480" cy="36" r="2.67"/><circle cx="492" cy="36" r="2.93"/><circle cx="504" cy="36" r="3.20"/><circle cx="0" cy="48" r="2.00"/><circle cx="12" cy="48" r="2.27"/><circle cx="24" cy="48" r="2.53"/><circle cx="36" cy="48" r="2.80"/><circle cx="48" cy="48" r="3.07"/><circle cx="60" cy="48" r="3.33"/><circle cx="72" cy="48" r="3.60"/><circle cx="84" cy="48" r="3.87"/><circle cx="96" cy="48" r="2.13"/><circle cx="108" cy="48" r="2.40"/><circle cx="120" cy="48" r="2.67"/><circle cx="132" cy="48" r="2.93"/><circle cx="144" cy="48" r="3.20"/><circle cx="156" cy="48" r="3.47"/><circle cx="168" cy="48" r="3.73"/><circle cx="180" cy="48" r="2.00"/><circle cx="192" cy="48" r="2.27"/><circle cx="204" cy="48" r="2.53"/><circle cx="216" cy="48" r="2.80"/><circle cx="228" cy="48" r="3.07"/><circle cx="240" cy="48" r="3.33"/><circle cx="252" cy="48" r="3.60"/><circle cx="264" cy="48" r="3.87"/><circle cx="276" cy="48" r="2.13"/><circle cx="288" cy="48" r="2.40"/><circle cx="300" cy="48" r="2.67"/><circle cx="312" cy="48" r="2.93"/><circle cx="324" cy="48" r="3.20"/><circle cx="336" cy="48" r="3.47"/><circle cx="348" cy="48" r="3.73"/><circle cx="360" cy="48" r="2.00"/><circle cx="372" cy="48" r="2.27"/><circle cx="384" cy="48" r="2.53"/><circle cx="396" cy="48" r="2.80"/><circle cx="408" cy="48" r="3.07"/><circle cx="420" cy="48" r="3.33"/><circle cx="432" cy="48" r="3.60"/><circle cx="444" cy="48" r="3.87"/><circle cx="456" cy="48" r="2.13"/><circle cx="468" cy="48" r="2.40"/><circle cx="480" cy="48" r="2.67"/><circle cx="492" cy="48" r="2.93"/><circle cx="504" cy="48" r="3.20"/><circle cx="0" cy="60" r="2.00"/><circle cx="12" cy="60" r="2.27"/><circle cx="24" cy="60" r="2.53"/><circle cx="36" cy="60" r="2.80"/><circle cx="48" cy="60" r="3.07"/><circle cx="60" cy="60" r="3.33"/><circle cx="72" cy="60" r="3.60"/><circle cx="84" cy="60" r="3.87"/><circle cx="96" cy="60" r="2.13"/><circle cx="108" cy="60" r="2.40"/><circle cx="120" cy="60" r="2.67"/><circle cx="132" cy="60" r="2.93"/><circle cx="144" cy="60" r="3.20"/><circle cx="156" cy="60" r="3.47"/><circle cx="168" cy="60" r="3.73"/><circle cx="180" cy="60" r="2.00"/><circle cx="192" cy="60" r="2.27"/><circle cx="204" cy="60" r="2.53"/><circle cx="216" cy="60" r="2.80"/><circle cx="228" cy="60" r="3.07"/><circle cx="240" cy="60" r="3.33"/><circle cx="252" cy="60" r="3.60"/><circle cx="264" cy="60" r="3.87"/><circle cx="276" cy="60" r="2.13"/><circle cx="288" cy="60" r="2.40"/><circle cx="300" cy="60" r="2.67"/><circle cx="312" cy="60" r="2.93"/><circle cx="324" cy="60" r="3.20"/><circle cx="336" cy="60" r="3.47"/><circle cx="348" cy="60" r="3.73"/><circle cx="360" cy="60" r="2.00"/><circle cx="372" cy="60" r="2.27"/><circle cx="384" cy="60" r="2.53"/><circle cx="396" cy="60" r="2.80"/><circle cx="408" cy="60" r="3.07"/><circle cx="420" cy="60" r="3.33"/><circle cx="432" cy="60" r="3.60"/><circle cx="444" cy="60" r="3.87"/><circle cx="456" cy="60" r="2.13"/><circle cx="468" cy="60" r="2.40"/><circle cx="480" cy="60" r="2.67"/><circle cx="492" cy="60" r="2.93"/><circle cx="504" cy="60" r="3.20"/><circle cx="0" cy="72" r="2.00"/><circle cx="12" cy="72" r="2.27"/><circle cx="24" cy="72" r="2.53"/><circle cx="36" cy="72" r="2.80"/><circle cx="48" cy="72" r="3.07"/><circle cx="60" cy="72" r="3.33"/><circle cx="72" cy="72" r="3.60"/><circle cx="84" cy="72" r="3.87"/><circle cx="96" cy="72" r="2.13"/><circle cx="108" cy="72" r="2.40"/><circle cx="120" cy="72" r="2.67"/><circle cx="132" cy="72" r="2.93"/><circle cx="144" cy="72" r="3.20"/><circle cx="156" cy="72" r="3.47"/><circle cx="168" cy="72" r="3.73"/><circle cx="180" cy="72" r="2.00"/><circle cx="192" cy="72" r="2.27"/><circle cx="204" cy="72" r="2.53"/><circle cx="216" cy="72" r="2.80"/><circle cx="228" cy="72" r="3.07"/><circle cx="240" cy="72" r="3.33"/><circle cx="252" cy="72" r="3.60"/><circle cx="264" cy="72" r="3.87"/><circle cx="276" cy="72" r="2.13"/><circle cx="288" cy="72" r="2.40"/><circle cx="300" cy="72" r="2.67"/><circle cx="312" cy="72" r="2.93"/><circle cx="324" cy="72" r="3.20"/><circle cx="336" cy="72" r="3.47"/><circle cx="348" cy="72" r="3.73"/><circle cx="360" cy="72" r="2.00"/><circle cx="372" cy="72" r="2.27"/><circle cx="384" cy="72" r="2.53"/><circle cx="396" cy="72" r="2.80"/><circle cx="408" cy="72" r="3.07"/><circle cx="420" cy="72" r="3.33"/><circle cx="432" cy="72" r="3.60"/><circle cx="444" cy="72" r="3.87"/><circle cx="456" cy="72" r="2.13"/><circle cx="468" cy="72" r="2.40"/><circle cx="480" cy="72" r="2.67"/><circle cx="492" cy="72" r="2.93"/><circle cx="504" cy="72" r="3.20"/><circle cx="0" cy="84" r="2.00"/><circle cx="12" cy="84" r="2.27"/><circle cx="24" cy="84" r="2.53"/><circle cx="36" cy="84" r="2.80"/><circle cx="48" cy="84" r="3.07"/><circle cx="60" cy="84" r="3.33"/><circle cx="72" cy="84" r="3.60"/><circle cx="84" cy="84" r="3.87"/><circle cx="96" cy="84" r="2.13"/><circle cx="108" cy="84" r="2.40"/><circle cx="120" cy="84" r="2.67"/><circle cx="132" cy="84" r="2.93"/><circle cx="144" cy="84" r="3.20"/><circle cx="156" cy="84" r="3.47"/><circle cx="168" cy="84" r="3.73"/><circle cx="180" cy="84" r="2.00"/><circle cx="192" cy="84" r="2.27"/><circle cx="204" cy="84" r="2.53"/><circle cx="216" cy="84" r="2.80"/><circle cx="228" cy="84" r="3.07"/><circle cx="240" cy="84" r="3.33"/><circle cx="252" cy="84" r="3.60"/><circle cx="264" cy="84" r="3.87"/><circle cx="276" cy="84" r="2.13"/><circle cx="288" cy="84" r="2.40"/><circle cx="300" cy="84" r="2.67"/><circle cx="312" cy="84" r="2.93"/><circle cx="324" cy="84" r="3.20"/><circle cx="336" cy="84" r="3.47"/><circle cx="348" cy="84" r="3.73"/><circle cx="360" cy="84" r="2.00"/><circle cx="372" cy="84" r="2.27"/><circle cx="384" cy="84" r="2.53"/><circle cx="396" cy="84" r="2.80"/><circle cx="408" cy="84" r="3.07"/><circle cx="420" cy="84" r="3.33"/><circle cx="432" cy="84" r="3.60"/><circle cx="444" cy="84" r="3.87"/><circle cx="456" cy="84" r="2.13"/><circle cx="468" cy="84" r="2.40"/><circle cx="480" cy="84" r="2.67"/><circle cx="492" cy="84" r="2.93"/><circle cx="504" cy="84" r="3.20"/><circle cx="0" cy="96" r="2.00"/><circle cx="12" cy="96" r="2.27"/><circle cx="24" cy="96" r="2.53"/><circle cx="36" cy="96" r="2.80"/><circle cx="48" cy="96" r="3.07"/><circle cx="60" cy="96" r="3.33"/><circle cx="72" cy="96" r="3.60"/><circle cx="84" cy="96" r="3.87"/><circle cx="96" cy="96" r="2.13"/><circle cx="108" cy="96" r="2.40"/><circle cx="120" cy="96" r="2.67"/><circle cx="132" cy="96" r="2.93"/><circle cx="144" cy="96" r="3.20"/><circle cx="156" cy="96" r="3.47"/><circle cx="168" cy="96" r="3.73"/><circle cx="180" cy="96" r="2.00"/><circle cx="192" cy="96" r="2.27"/><circle cx="204" cy="96" r="2.53"/><circle cx="216" cy="96" r="2.80"/><circle cx="228" cy="96" r="3.07"/><circle cx="240" cy="96" r="3.33"/><circle cx="252" cy="96" r="3.60"/><circle cx="264" cy="96" r="3.87"/><circle cx="276" cy="96" r="2.13"/><circle cx="288" cy="96" r="2.40"/><circle cx="300" cy="96" r="2.67"/><circle cx="312" cy="96" r="2.93"/><circle cx="324" cy="96" r="3.20"/><circle cx="336" cy="96" r="3.47"/><circle cx="348" cy="96" r="3.73"/><circle cx="360" cy="96" r="2.00"/><circle cx="372" cy="96" r="2.27"/><circle cx="384" cy="96" r="2.53"/><circle cx="396" cy="96" r="2.80"/><circle cx="408" cy="96" r="3.07"/><circle cx="420" cy="96" r="3.33"/><circle cx="432" cy="96" r="3.60"/><circle cx="444" cy="96" r="3.87"/><circle cx="456" cy="96" r="2.13"/><circle cx="468" cy="96" r="2.40"/><circle cx="480" cy="96" r="2.67"/><circle cx="492" cy="96" r="2.93"/><circle cx="504" cy="96" r="3.20"/><circle cx="0" cy="108" r="2.00"/><circle cx="12" cy="108" r="2.27"/><circle cx="24" cy="108" r="2.53"/><circle cx="36" cy="108" r="2.80"/><circle cx="48" cy="108" r="3.07"/><circle cx="60" cy="108" r="3.33"/><circle cx="72" cy="108" r="3.60"/><circle cx="84" cy="108" r="3.87"/><circle cx="96" cy="108" r="2.13"/><circle cx="108" cy="108" r="2.40"/><circle cx="120" cy="108" r="2.67"/><circle cx="132" cy="108" r="2.93"/><circle cx="144" cy="108" r="3.20"/><circle cx="156" cy="108" r="3.47"/><circle cx="168" cy="108" r="3.73"/><circle cx="180" cy="108" r="2.00"/><circle cx="192" cy="108" r="2.27"/><circle cx="204" cy="108" r="2.53"/><circle cx="216" cy="108" r="2.80"/><circle cx="228" cy="108" r="3.07"/><circle cx="240" cy="108" r="3.33"/><circle cx="252" cy="108" r="3.60"/><circle cx="264" cy="108" r="3.87"/><circle cx="276" cy="108" r="2.13"/><circle cx="288" cy="108" r="2.40"/><circle cx="300" cy="108" r="2.67"/><circle cx="312" cy="108" r="2.93"/><circle cx="324" cy="108" r="3.20"/><circle cx="336" cy="108" r="3.47"/><circle cx="348" cy="108" r="3.73"/><circle cx="360" cy="108" r="2.00"/><circle cx="372" cy="108" r="2.27"/><circle cx="384" cy="108" r="2.53"/><circle cx="396" cy="108" r="2.80"/><circle cx="408" cy="108" r="3.07"/><circle cx="420" cy="108" r="3.33"/><circle cx="432" cy="108" r="3.60"/><circle cx="444" cy="108" r="3.87"/><circle cx="456" cy="108" r="2.13"/><circle cx="468" cy="108" r="2.40"/><circle cx="480" cy="108" r="2.67"/><circle cx="492" cy="108" r="2.93"/><circle cx="504" cy="108" r="3.20"/><circle cx="0" cy="120" r="2.00"/><circle cx="12" cy="120" r="2.27"/><circle cx="24" cy="120" r="2.53"/><circle cx="36" cy="120" r="2.80"/><circle cx="48" cy="120" r="3.07"/><circle cx="60" cy="120" r="3.33"/><circle cx="72" cy="120" r="3.60"/><circle cx="84" cy="120" r="3.87"/><circle cx="96" cy="120" r="2.13"/><circle cx="108" cy="120" r="2.40"/><circle cx="120" cy="120" r="2.67"/><circle cx="132" cy="120" r="2.93"/><circle cx="144" cy="120" r="3.20"/><circle cx="156" cy="120" r="3.47"/><circle cx="168" cy="120" r="3.73"/><circle cx="180" cy="120" r="2.00"/><circle cx="192" cy="120" r="2.27"/><circle cx="204" cy="120" r="2.53"/><circle cx="216" cy="120" r="2.80"/><circle cx="228" cy="120" r="3.07"/><circle cx="240" cy="120" r="3.33"/><circle cx="252" cy="120" r="3.60"/><circle cx="264" cy="120" r="3.87"/><circle cx="276" cy="120" r="2.13"/><circle cx="288" cy="120" r="2.40"/><circle cx="300" cy="120" r="2.67"/><circle cx="312" cy="120" r="2.93"/><circle cx="324" cy="120" r="3.20"/><circle cx="336" cy="120" r="3.47"/><circle cx="348" cy="120" r="3.73"/><circle cx="360" cy="120" r="2.00"/><circle cx="372" cy="120" r="2.27"/><circle cx="384" cy="120" r="2.53"/><circle cx="396" cy="120" r="2.80"/><circle cx="408" cy="120" r="3.07"/><circle cx="420" cy="120" r="3.33"/><circle cx="432" cy="120" r="3.60"/><circle cx="444" cy="120" r="3.87"/><circle cx="456" cy="120" r="2.13"/><circle cx="468" cy="120" r="2.40"/><circle cx="480" cy="120" r="2.67"/><circle cx="492" cy="120" r="2.93"/><circle cx="504" cy="120" r="3.20"/><circle cx="0" cy="132" r="2.00"/><circle cx="12" cy="132" r="2.27"/><circle cx="24" cy="132" r="2.53"/><circle cx="36" cy="132" r="2.80"/><circle cx="48" cy="132" r="3.07"/><circle cx="60" cy="132" r="3.33"/><circle cx="72" cy="132" r="3.60"/><circle cx="84" cy="132" r="3.87"/><circle cx="96" cy="132" r="2.13"/><circle cx="108" cy="132" r="2.40"/><circle cx="120" cy="132" r="2.67"/><circle cx="132" cy="132" r="2.93"/><circle cx="144" cy="132" r="3.20"/><circle cx="156" cy="132" r="3.47"/><circle cx="168" cy="132" r="3.73"/><circle cx="180" cy="132" r="2.00"/><circle cx="192" cy="132" r="2.27"/><circle cx="204" cy="132" r="2.53"/><circle cx="216" cy="132" r="2.80"/><circle cx="228" cy="132" r="3.07"/><circle cx="240" cy="132" r="3.33"/><circle cx="252" cy="132" r="3.60"/><circle cx="264" cy="132" r="3.87"/><circle cx="276" cy="132" r="2.13"/><circle cx="288" cy="132" r="2.40"/><circle cx="300" cy="132" r="2.67"/><circle cx="312" cy="132" r="2.93"/><circle cx="324" cy="132" r="3.20"/><circle cx="336" cy="132" r="3.47"/><circle cx="348" cy="132" r="3.73"/><circle cx="360" cy="132" r="2.00"/><circle cx="372" cy="132" r="2.27"/><circle cx="384" cy="132" r="2.53"/><circle cx="396" cy="132" r="2.80"/><circle cx="408" cy="132" r="3.07"/><circle cx="420" cy="132" r="3.33"/><circle cx="432" cy="132" r="3.60"/><circle cx="444" cy="132" r="3.87"/><circle cx="456" cy="132" r="2.13"/><circle cx="468" cy="132" r="2.40"/><circle cx="480" cy="132" r="2.67"/><circle cx="492" cy="132" r="2.93"/><circle cx="504" cy="132" r="3.20"/><circle cx="0" cy="144" r="2.00"/><circle cx="12" cy="144" r="2.27"/><circle cx="24" cy="144" r="2.53"/><circle cx="36" cy="144" r="2.80"/><circle cx="48" cy="144" r="3.07"/><circle cx="60" cy="144" r="3.33"/><circle cx="72" cy="144" r="3.60"/><circle cx="84" cy="144" r="3.87"/><circle cx="96" cy="144" r="2.13"/><circle cx="108" cy="144" r="2.40"/><circle cx="120" cy="144" r="2.67"/><circle cx="132" cy="144" r="2.93"/><circle cx="144" cy="144" r="3.20"/><circle cx="156" cy="144" r="3.47"/><circle cx="168" cy="144" r="3.73"/><circle cx="180" cy="144" r="2.00"/><circle cx="192" cy="144" r="2.27"/><circle cx="204" cy="144" r="2.53"/><circle cx="216" cy="144" r="2.80"/><circle cx="228" cy="144" r="3.07"/><circle cx="240" cy="144" r="3.33"/><circle cx="252" cy="144" r="3.60"/><circle cx="264" cy="144" r="3.87"/><circle cx="276" cy="144" r="2.13"/><circle cx="288" cy="144" r="2.40"/><circle cx="300" cy="144" r="2.67"/><circle cx="312" cy="144" r="2.93"/><circle cx="324" cy="144" r="3.20"/><circle cx="336" cy="144" r="3.47"/><circle cx="348" cy="144" r="3.73"/><circle cx="360" cy="144" r="2.00"/><circle cx="372" cy="144" r="2.27"/><circle cx="384" cy="144" r="2.53"/><circle cx="396" cy="144" r="2.80"/><circle cx="408" cy="144" r="3.07"/><circle cx="420" cy="144" r="3.33"/><circle cx="432" cy="144" r="3.60"/><circle cx="444" cy="144" r="3.87"/><circle cx="456" cy="144" r="2.13"/><circle cx="468" cy="144" r="2.40"/><circle cx="480" cy="144" r="2.67"/><circle cx="492" cy="144" r="2.93"/><circle cx="504" cy="144" r="3.20"/><circle cx="0" cy="156" r="2.00"/><circle cx="12" cy="156" r="2.27"/><circle cx="24" cy="156" r="2.53"/><circle cx="36" cy="156" r="2.80"/><circle cx="48" cy="156" r="3.07"/><circle cx="60" cy="156" r="3.33"/><circle cx="72" cy="156" r="3.60"/><circle cx="84" cy="156" r="3.87"/><circle cx="96" cy="156" r="2.13"/><circle cx="108" cy="156" r="2.40"/><circle cx="120" cy="156" r="2.67"/><circle cx="132" cy="156" r="2.93"/><circle cx="144" cy="156" r="3.20"/><circle cx="156" cy="156" r="3.47"/><circle cx="168" cy="156" r="3.73"/><circle cx="180" cy="156" r="2.00"/><circle cx="192" cy="156" r="2.27"/><circle cx="204" cy="156" r="2.53"/><circle cx="216" cy="156" r="2.80"/><circle cx="228" cy="156" r="3.07"/><circle cx="240" cy="156" r="3.33"/><circle cx="252" cy="156" r="3.60"/><circle cx="264" cy="156" r="3.87"/><circle cx="276" cy="156" r="2.13"/><circle cx="288" cy="156" r="2.40"/><circle cx="300" cy="156" r="2.67"/><circle cx="312" cy="156" r="2.93"/><circle cx="324" cy="156" r="3.20"/><circle cx="336" cy="156" r="3.47"/><circle cx="348" cy="156" r="3.73"/><circle cx="360" cy="156" r="2.00"/><circle cx="372" cy="156" r="2.27"/><circle cx="384" cy="156" r="2.53"/><circle cx="396" cy="156" r="2.80"/><circle cx="408" cy="156" r="3.07"/><circle cx="420" cy="156" r="3.33"/><circle cx="432" cy="156" r="3.60"/><circle cx="444" cy="156" r="3.87"/><circle cx="456" cy="156" r="2.13"/><circle cx="468" cy="156" r="2.40"/><circle cx="480" cy="156" r="2.67"/><circle cx="492" cy="156" r="2.93"/><circle cx="504" cy="156" r="3.20"/><circle cx="0" cy="168" r="2.00"/><circle cx="12" cy="168" r="2.27"/><circle cx="24" cy="168" r="2.53"/><circle cx="36" cy="168" r="2.80"/><circle cx="48" cy="168" r="3.07"/><circle cx="60" cy="168" r="3.33"/><circle cx="72" cy="168" r="3.60"/><circle cx="84" cy="168" r="3.87"/><circle cx="96" cy="168" r="2.13"/><circle cx="108" cy="168" r="2.40"/><circle cx="120" cy="168" r="2.67"/><circle cx="132" cy="168" r="2.93"/><circle cx="144" cy="168" r="3.20"/><circle cx="156" cy="168" r="3.47"/><circle cx="168" cy="168" r="3.73"/><circle cx="180" cy="168" r="2.00"/><circle cx="192" cy="168" r="2.27"/><circle cx="204" cy="168" r="2.53"/><circle cx="216" cy="168" r="2.80"/><circle cx="228" cy="168" r="3.07"/><circle cx="240" cy="168" r="3.33"/><circle cx="252" cy="168" r="3.60"/><circle cx="264" cy="168" r="3.87"/><circle cx="276" cy="168" r="2.13"/><circle cx="288" cy="168" r="2.40"/><circle cx="300" cy="168" r="2.67"/><circle cx="312" cy="168" r="2.93"/><circle cx="324" cy="168" r="3.20"/><circle cx="336" cy="168" r="3.47"/><circle cx="348" cy="168" r="3.73"/><circle cx="360" cy="168" r="2.00"/><circle cx="372" cy="168" r="2.27"/><circle cx="384" cy="168" r="2.53"/><circle cx="396" cy="168" r="2.80"/><circle cx="408" cy="168" r="3.07"/><circle cx="420" cy="168" r="3.33"/><circle cx="432" cy="168" r="3.60"/><circle cx="444" cy="168" r="3.87"/><circle cx="456" cy="168" r="2.13"/><circle cx="468" cy="168" r="2.40"/><circle cx="480" cy="168" r="2.67"/><circle cx="492" cy="168" r="2.93"/><circle cx="504" cy="168" r="3.20"/><circle cx="0" cy="180" r="2.00"/><circle cx="12" cy="180" r="2.27"/><circle cx="24" cy="180" r="2.53"/><circle cx="36" cy="180" r="2.80"/><circle cx="48" cy="180" r="3.07"/><circle cx="60" cy="180" r="3.33"/><circle cx="72" cy="180" r="3.60"/><circle cx="84" cy="180" r="3.87"/><circle cx="96" cy="180" r="2.13"/><circle cx="108" cy="180" r="2.40"/><circle cx="120" cy="180" r="2.67"/><circle cx="132" cy="180" r="2.93"/><circle cx="144" cy="180" r="3.20"/><circle cx="156" cy="180" r="3.47"/><circle cx="168" cy="180" r="3.73"/><circle cx="180" cy="180" r="2.00"/><circle cx="192" cy="180" r="2.27"/><circle cx="204" cy="180" r="2.53"/><circle cx="216" cy="180" r="2.80"/><circle cx="228" cy="180" r="3.07"/><circle cx="240" cy="180" r="3.33"/><circle cx="252" cy="180" r="3.60"/><circle cx="264" cy="180" r="3.87"/><circle cx="276" cy="180" r="2.13"/><circle cx="288" cy="180" r="2.40"/><circle cx="300" cy="180" r="2.67"/><circle cx="312" cy="180" r="2.93"/><circle cx="324" cy="180" r="3.20"/><circle cx="336" cy="180" r="3.47"/><circle cx="348" cy="180" r="3.73"/><circle cx="360" cy="180" r="2.00"/><circle cx="372" cy="180" r="2.27"/><circle cx="384" cy="180" r="2.53"/><circle cx="396" cy="180" r="2.80"/><circle cx="408" cy="180" r="3.07"/><circle cx="420" cy="180" r="3.33"/><circle cx="432" cy="180" r="3.60"/><circle cx="444" cy="180" r="3.87"/><circle cx="456" cy="180" r="2.13"/><circle cx="468" cy="180" r="2.40"/><circle cx="480" cy="180" r="2.67"/><circle cx="492" cy="180" r="2.93"/><circle cx="504" cy="180" r="3.20"/><circle cx="0" cy="192" r="2.00"/><circle cx="12" cy="192" r="2.27"/><circle cx="24" cy="192" r="2.53"/><circle cx="36" cy="192" r="2.80"/><circle cx="48" cy="192" r="3.07"/><circle cx="60" cy="192" r="3.33"/><circle cx="72" cy="192" r="3.60"/><circle cx="84" cy="192" r="3.87"/><circle cx="96" cy="192" r="2.13"/><circle cx="108" cy="192" r="2.40"/><circle cx="120" cy="192" r="2.67"/><circle cx="132" cy="192" r="2.93"/><circle cx="144" cy="192" r="3.20"/><circle cx="156" cy="192" r="3.47"/><circle cx="168" cy="192" r="3.73"/><circle cx="180" cy="192" r="2.00"/><circle cx="192" cy="192" r="2.27"/><circle cx="204" cy="192" r="2.53"/><circle cx="216" cy="192" r="2.80"/><circle cx="228" cy="192" r="3.07"/><circle cx="240" cy="192" r="3.33"/><circle cx="252" cy="192" r="3.60"/><circle cx="264" cy="192" r="3.87"/><circle cx="276" cy="192" r="2.13"/><circle cx="288" cy="192" r="2.40"/><circle cx="300" cy="192" r="2.67"/><circle cx="312" cy="192" r="2.93"/><circle cx="324" cy="192" r="3.20"/><circle cx="336" cy="192" r="3.47"/><circle cx="348" cy="192" r="3.73"/><circle cx="360" cy="192" r="2.00"/><circle cx="372" cy="192" r="2.27"/><circle cx="384" cy="192" r="2.53"/><circle cx="396" cy="192" r="2.80"/><circle cx="408" cy="192" r="3.07"/><circle cx="420" cy="192" r="3.33"/><circle cx="432" cy="192" r="3.60"/><circle cx="444" cy="192" r="3.87"/><circle cx="456" cy="192" r="2.13"/><circle cx="468" cy="192" r="2.40"/><circle cx="480" cy="192" r="2.67"/><circle cx="492" cy="192" r="2.93"/><circle cx="504" cy="192" r="3.20"/><circle cx="0" cy="204" r="2.00"/><circle cx="12" cy="204" r="2.27"/><circle cx="24" cy="204" r="2.53"/><circle cx="36" cy="204" r="2.80"/><circle cx="48" cy="204" r="3.07"/><circle cx="60" cy="204" r="3.33"/><circle cx="72" cy="204" r="3.60"/><circle cx="84" cy="204" r="3.87"/><circle cx="96" cy="204" r="2.13"/><circle cx="108" cy="204" r="2.40"/><circle cx="120" cy="204" r="2.67"/><circle cx="132" cy="204" r="2.93"/><circle cx="144" cy="204" r="3.20"/><circle cx="156" cy="204" r="3.47"/><circle cx="168" cy="204" r="3.73"/><circle cx="180" cy="204" r="2.00"/><circle cx="192" cy="204" r="2.27"/><circle cx="204" cy="204" r="2.53"/><circle cx="216" cy="204" r="2.80"/><circle cx="228" cy="204" r="3.07"/><circle cx="240" cy="204" r="3.33"/><circle cx="252" cy="204" r="3.60"/><circle cx="264" cy="204" r="3.87"/><circle cx="276" cy="204" r="2.13"/><circle cx="288" cy="204" r="2.40"/><circle cx="300" cy="204" r="2.67"/><circle cx="312" cy="204" r="2.93"/><circle cx="324" cy="204" r="3.20"/><circle cx="336" cy="204" r="3.47"/><circle cx="348" cy="204" r="3.73"/><circle cx="360" cy="204" r="2.00"/><circle cx="372" cy="204" r="2.27"/><circle cx="384" cy="204" r="2.53"/><circle cx="396" cy="204" r="2.80"/><circle cx="408" cy="204" r="3.07"/><circle cx="420" cy="204" r="3.33"/><circle cx="432" cy="204" r="3.60"/><circle cx="444" cy="204" r="3.87"/><circle cx="456" cy="204" r="2.13"/><circle cx="468" cy="204" r="2.40"/><circle cx="480" cy="204" r="2.67"/><circle cx="492" cy="204" r="2.93"/><circle cx="504" cy="204" r="3.20"/><circle cx="0" cy="216" r="2.00"/><circle cx="12" cy="216" r="2.27"/><circle cx="24" cy="216" r="2.53"/><circle cx="36" cy="216" r="2.80"/><circle cx="48" cy="216" r="3.07"/><circle cx="60" cy="216" r="3.33"/><circle cx="72" cy="216" r="3.60"/><circle cx="84" cy="216" r="3.87"/><circle cx="96" cy="216" r="2.13"/><circle cx="108" cy="216" r="2.40"/><circle cx="120" cy="216" r="2.67"/><circle cx="132" cy="216" r="2.93"/><circle cx="144" cy="216" r="3.20"/><circle cx="156" cy="216" r="3.47"/><circle cx="168" cy="216" r="3.73"/><circle cx="180" cy="216" r="2.00"/><circle cx="192" cy="216" r="2.27"/><circle cx="204" cy="216" r="2.53"/><circle cx="216" cy="216" r="2.80"/><circle cx="228" cy="216" r="3.07"/><circle cx="240" cy="216" r="3.33"/><circle cx="252" cy="216" r="3.60"/><circle cx="264" cy="216" r="3.87"/><circle cx="276" cy="216" r="2.13"/><circle cx="288" cy="216" r="2.40"/><circle cx="300" cy="216" r="2.67"/><circle cx="312" cy="216" r="2.93"/><circle cx="324" cy="216" r="3.20"/><circle cx="336" cy="216" r="3.47"/><circle cx="348" cy="216" r="3.73"/><circle cx="360" cy="216" r="2.00"/><circle cx="372" cy="216" r="2.27"/><circle cx="384" cy="216" r="2.53"/><circle cx="396" cy="216" r="2.80"/><circle cx="408" cy="216" r="3.07"/><circle cx="420" cy="216" r="3.33"/><circle cx="432" cy="216" r="3.60"/><circle cx="444" cy="216" r="3.87"/><circle cx="456" cy="216" r="2.13"/><circle cx="468" cy="216" r="2.40"/><circle cx="480" cy="216" r="2.67"/><circle cx="492" cy="216" r="2.93"/><circle cx="504" cy="216" r="3.20"/><circle cx="0" cy="228" r="2.00"/><circle cx="12" cy="228" r="2.27"/><circle cx="24" cy="228" r="2.53"/><circle cx="36" cy="228" r="2.80"/><circle cx="48" cy="228" r="3.07"/><circle cx="60" cy="228" r="3.33"/><circle cx="72" cy="228" r="3.60"/><circle cx="84" cy="228" r="3.87"/><circle cx="96" cy="228" r="2.13"/><circle cx="108" cy="228" r="2.40"/><circle cx="120" cy="228" r="2.67"/><circle cx="132" cy="228" r="2.93"/><circle cx="144" cy="228" r="3.20"/><circle cx="156" cy="228" r="3.47"/><circle cx="168" cy="228" r="3.73"/><circle cx="180" cy="228" r="2.00"/><circle cx="192" cy="228" r="2.27"/><circle cx="204" cy="228" r="2.53"/><circle cx="216" cy="228" r="2.80"/><circle cx="228" cy="228" r="3.07"/><circle cx="240" cy="228" r="3.33"/><circle cx="252" cy="228" r="3.60"/><circle cx="264" cy="228" r="3.87"/><circle cx="276" cy="228" r="2.13"/><circle cx="288" cy="228" r="2.40"/><circle cx="300" cy="228" r="2.67"/><circle cx="312" cy="228" r="2.93"/><circle cx="324" cy="228" r="3.20"/><circle cx="336" cy="228" r="3.47"/><circle cx="348" cy="228" r="3.73"/><circle cx="360" cy="228" r="2.00"/><circle cx="372" cy="228" r="2.27"/><circle cx="384" cy="228" r="2.53"/><circle cx="396" cy="228" r="2.80"/><circle cx="408" cy="228" r="3.07"/><circle cx="420" cy="228" r="3.33"/><circle cx="432" cy="228" r="3.60"/><circle cx="444" cy="228" r="3.87"/><circle cx="456" cy="228" r="2.13"/><circle cx="468" cy="228" r="2.40"/><circle cx="480" cy="228" r="2.67"/><circle cx="492" cy="228" r="2.93"/><circle cx="504" cy="228" r="3.20"/><circle cx="0" cy="240" r="2.00"/><circle cx="12" cy="240" r="2.27"/><circle cx="24" cy="240" r="2.53"/><circle cx="36" cy="240" r="2.80"/><circle cx="48" cy="240" r="3.07"/><circle cx="60" cy="240" r="3.33"/><circle cx="72" cy="240" r="3.60"/><circle cx="84" cy="240" r="3.87"/><circle cx="96" cy="240" r="2.13"/><circle cx="108" cy="240" r="2.40"/><circle cx="120" cy="240" r="2.67"/><circle cx="132" cy="240" r="2.93"/><circle cx="144" cy="240" r="3.20"/><circle cx="156" cy="240" r="3.47"/><circle cx="168" cy="240" r="3.73"/><circle cx="180" cy="240" r="2.00"/><circle cx="192" cy="240" r="2.27"/><circle cx="204" cy="240" r="2.53"/><circle cx="216" cy="240" r="2.80"/><circle cx="228" cy="240" r="3.07"/><circle cx="240" cy="240" r="3.33"/><circle cx="252" cy="240" r="3.60"/><circle cx="264" cy="240" r="3.87"/><circle cx="276" cy="240" r="2.13"/><circle cx="288" cy="240" r="2.40"/><circle cx="300" cy="240" r="2.67"/><circle cx="312" cy="240" r="2.93"/><circle cx="324" cy="240" r="3.20"/><circle cx="336" cy="240" r="3.47"/><circle cx="348" cy="240" r="3.73"/><circle cx="360" cy="240" r="2.00"/><circle cx="372" cy="240" r="2.27"/><circle cx="384" cy="240" r="2.53"/><circle cx="396" cy="240" r="2.80"/><circle cx="408" cy="240" r="3.07"/><circle cx="420" cy="240" r="3.33"/><circle cx="432" cy="240" r="3.60"/><circle cx="444" cy="240" r="3.87"/><circle cx="456" cy="240" r="2.13"/><circle cx="468" cy="240" r="2.40"/><circle cx="480" cy="240" r="2.67"/><circle cx="492" cy="240" r="2.93"/><circle cx="504" cy="240" r="3.20"/><circle cx="0" cy="252" r="2.00"/><circle cx="12" cy="252" r="2.27"/><circle cx="24" cy="252" r="2.53"/><circle cx="36" cy="252" r="2.80"/><circle cx="48" cy="252" r="3.07"/><circle cx="60" cy="252" r="3.33"/><circle cx="72" cy="252" r="3.60"/><circle cx="84" cy="252" r="3.87"/><circle cx="96" cy="252" r="2.13"/><circle cx="108" cy="252" r="2.40"/><circle cx="120" cy="252" r="2.67"/><circle cx="132" cy="252" r="2.93"/><circle cx="144" cy="252" r="3.20"/><circle cx="156" cy="252" r="3.47"/><circle cx="168" cy="252" r="3.73"/><circle cx="180" cy="252" r="2.00"/><circle cx="192" cy="252" r="2.27"/><circle cx="204" cy="252" r="2.53"/><circle cx="216" cy="252" r="2.80"/><circle cx="228" cy="252" r="3.07"/><circle cx="240" cy="252" r="3.33"/><circle cx="252" cy="252" r="3.60"/><circle cx="264" cy="252" r="3.87"/><circle cx="276" cy="252" r="2.13"/><circle cx="288" cy="252" r="2.40"/><circle cx="300" cy="252" r="2.67"/><circle cx="312" cy="252" r="2.93"/><circle cx="324" cy="252" r="3.20"/><circle cx="336" cy="252" r="3.47"/><circle cx="348" cy="252" r="3.73"/><circle cx="360" cy="252" r="2.00"/><circle cx="372" cy="252" r="2.27"/><circle cx="384" cy="252" r="2.53"/><circle cx="396" cy="252" r="2.80"/><circle cx="408" cy="252" r="3.07"/><circle cx="420" cy="252" r="3.33"/><circle cx="432" cy="252" r="3.60"/><circle cx="444" cy="252" r="3.87"/><circle cx="456" cy="252" r="2.13"/><circle cx="468" cy="252" r="2.40"/><circle cx="480" cy="252" r="2.67"/><circle cx="492" cy="252" r="2.93"/><circle cx="504" cy="252" r="3.20"/><circle cx="0" cy="264" r="2.00"/><circle cx="12" cy="264" r="2.27"/><circle cx="24" cy="264" r="2.53"/><circle cx="36" cy="264" r="2.80"/><circle cx="48" cy="264" r="3.07"/><circle cx="60" cy="264" r="3.33"/><circle cx="72" cy="264" r="3.60"/><circle cx="84" cy="264" r="3.87"/><circle cx="96" cy="264" r="2.13"/><circle cx="108" cy="264" r="2.40"/><circle cx="120" cy="264" r="2.67"/><circle cx="132" cy="264" r="2.93"/><circle cx="144" cy="264" r="3.20"/><circle cx="156" cy="264" r="3.47"/><circle cx="168" cy="264" r="3.73"/><circle cx="180" cy="264" r="2.00"/><circle cx="192" cy="264" r="2.27"/><circle cx="204" cy="264" r="2.53"/><circle cx="216" cy="264" r="2.80"/><circle cx="228" cy="264" r="3.07"/><circle cx="240" cy="264" r="3.33"/><circle cx="252" cy="264" r="3.60"/><circle cx="264" cy="264" r="3.87"/><circle cx="276" cy="264" r="2.13"/><circle cx="288" cy="264" r="2.40"/><circle cx="300" cy="264" r="2.67"/><circle cx="312" cy="264" r="2.93"/><circle cx="324" cy="264" r="3.20"/><circle cx="336" cy="264" r="3.47"/><circle cx="348" cy="264" r="3.73"/><circle cx="360" cy="264" r="2.00"/><circle cx="372" cy="264" r="2.27"/><circle cx="384" cy="264" r="2.53"/><circle cx="396" cy="264" r="2.80"/><circle cx="408" cy="264" r="3.07"/><circle cx="420" cy="264" r="3.33"/><circle cx="432" cy="264" r="3.60"/><circle cx="444" cy="264" r="3.87"/><circle cx="456" cy="264" r="2.13"/><circle cx="468" cy="264" r="2.40"/><circle cx="480" cy="264" r="2.67"/><circle cx="492" cy="264" r="2.93"/><circle cx="504" cy="264" r="3.20"/><circle cx="0" cy="276" r="2.00"/><circle cx="12" cy="276" r="2.27"/><circle cx="24" cy="276" r="2.53"/><circle cx="36" cy="276" r="2.80"/><circle cx="48" cy="276" r="3.07"/><circle cx="60" cy="276" r="3.33"/><circle cx="72" cy="276" r="3.60"/><circle cx="84" cy="276" r="3.87"/><circle cx="96" cy="276" r="2.13"/><circle cx="108" cy="276" r="2.40"/><circle cx="120" cy="276" r="2.67"/><circle cx="132" cy="276" r="2.93"/><circle cx="144" cy="276" r="3.20"/><circle cx="156" cy="276" r="3.47"/><circle cx="168" cy="276" r="3.73"/><circle cx="180" cy="276" r="2.00"/><circle cx="192" cy="276" r="2.27"/><circle cx="204" cy="276" r="2.53"/><circle cx="216" cy="276" r="2.80"/><circle cx="228" cy="276" r="3.07"/><circle cx="240" cy="276" r="3.33"/><circle cx="252" cy="276" r="3.60"/><circle cx="264" cy="276" r="3.87"/><circle cx="276" cy="276" r="2.13"/><circle cx="288" cy="276" r="2.40"/><circle cx="300" cy="276" r="2.67"/><circle cx="312" cy="276" r="2.93"/><circle cx="324" cy="276" r="3.20"/><circle cx="336" cy="276" r="3.47"/><circle cx="348" cy="276" r="3.73"/><circle cx="360" cy="276" r="2.00"/><circle cx="372" cy="276" r="2.27"/><circle cx="384" cy="276" r="2.53"/><circle cx="396" cy="276" r="2.80"/><circle cx="408" cy="276" r="3.07"/><circle cx="420" cy="276" r="3.33"/><circle cx="432" cy="276" r="3.60"/><circle cx="444" cy="276" r="3.87"/><circle cx="456" cy="276" r="2.13"/><circle cx="468" cy="276" r="2.40"/><circle cx="480" cy="276" r="2.67"/><circle cx="492" cy="276" r="2.93"/><circle cx="504" cy="276" r="3.20"/><circle cx="0" cy="288" r="2.00"/><circle cx="12" cy="288" r="2.27"/><circle cx="24" cy="288" r="2.53"/><circle cx="36" cy="288" r="2.80"/><circle cx="48" cy="288" r="3.07"/><circle cx="60" cy="288" r="3.33"/><circle cx="72" cy="288" r="3.60"/><circle cx="84" cy="288" r="3.87"/><circle cx="96" cy="288" r="2.13"/><circle cx="108" cy="288" r="2.40"/><circle cx="120" cy="288" r="2.67"/><circle cx="132" cy="288" r="2.93"/><circle cx="144" cy="288" r="3.20"/><circle cx="156" cy="288" r="3.47"/><circle cx="168" cy="288" r="3.73"/><circle cx="180" cy="288" r="2.00"/><circle cx="192" cy="288" r="2.27"/><circle cx="204" cy="288" r="2.53"/><circle cx="216" cy="288" r="2.80"/><circle cx="228" cy="288" r="3.07"/><circle cx="240" cy="288" r="3.33"/><circle cx="252" cy="288" r="3.60"/><circle cx="264" cy="288" r="3.87"/><circle cx="276" cy="288" r="2.13"/><circle cx="288" cy="288" r="2.40"/><circle cx="300" cy="288" r="2.67"/><circle cx="312" cy="288" r="2.93"/><circle cx="324" cy="288" r="3.20"/><circle cx="336" cy="288" r="3.47"/><circle cx="348" cy="288" r="3.73"/><circle cx="360" cy="288" r="2.00"/><circle cx="372" cy="288" r="2.27"/><circle cx="384" cy="288" r="2.53"/><circle cx="396" cy="288" r="2.80"/><circle cx="408" cy="288" r="3.07"/><circle cx="420" cy="288" r="3.33"/><circle cx="432" cy="288" r="3.60"/><circle cx="444" cy="288" r="3.87"/><circle cx="456" cy="288" r="2.13"/><circle cx="468" cy="288" r="2.40"/><circle cx="480" cy="288" r="2.67"/><circle cx="492" cy="288" r="2.93"/><circle cx="504" cy="288" r="3.20"/><circle cx="0" cy="300" r="2.00"/><circle cx="12" cy="300" r="2.27"/><circle cx="24" cy="300" r="2.53"/><circle cx="36" cy="300" r="2.80"/><circle cx="48" cy="300" r="3.07"/><circle cx="60" cy="300" r="3.33"/><circle cx="72" cy="300" r="3.60"/><circle cx="84" cy="300" r="3.87"/><circle cx="96" cy="300" r="2.13"/><circle cx="108" cy="300" r="2.40"/><circle cx="120" cy="300" r="2.67"/><circle cx="132" cy="300" r="2.93"/><circle cx="144" cy="300" r="3.20"/><circle cx="156" cy="300" r="3.47"/><circle cx="168" cy="300" r="3.73"/><circle cx="180" cy="300" r="2.00"/><circle cx="192" cy="300" r="2.27"/><circle cx="204" cy="300" r="2.53"/><circle cx="216" cy="300" r="2.80"/><circle cx="228" cy="300" r="3.07"/><circle cx="240" cy="300" r="3.33"/><circle cx="252" cy="300" r="3.60"/><circle cx="264" cy="300" r="3.87"/><circle cx="276" cy="300" r="2.13"/><circle cx="288" cy="300" r="2.40"/><circle cx="300" cy="300" r="2.67"/><circle cx="312" cy="300" r="2.93"/><circle cx="324" cy="300" r="3.20"/><circle cx="336" cy="300" r="3.47"/><circle cx="348" cy="300" r="3.73"/><circle cx="360" cy="300" r="2.00"/><circle cx="372" cy="300" r="2.27"/><circle cx="384" cy="300" r="2.53"/><circle cx="396" cy="300" r="2.80"/><circle cx="408" cy="300" r="3.07"/><circle cx="420" cy="300" r="3.33"/><circle cx="432" cy="300" r="3.60"/><circle cx="444" cy="300" r="3.87"/><circle cx="456" cy="300" r="2.13"/><circle cx="468" cy="300" r="2.40"/><circle cx="480" cy="300" r="2.67"/><circle cx="492" cy="300" r="2.93"/><circle cx="504" cy="300" r="3.20"/><circle cx="0" cy="312" r="2.00"/><circle cx="12" cy="312" r="2.27"/><circle cx="24" cy="312" r="2.53"/><circle cx="36" cy="312" r="2.80"/><circle cx="48" cy="312" r="3.07"/><circle cx="60" cy="312" r="3.33"/><circle cx="72" cy="312" r="3.60"/><circle cx="84" cy="312" r="3.87"/><circle cx="96" cy="312" r="2.13"/><circle cx="108" cy="312" r="2.40"/><circle cx="120" cy="312" r="2.67"/><circle cx="132" cy="312" r="2.93"/><circle cx="144" cy="312" r="3.20"/><circle cx="156" cy="312" r="3.47"/><circle cx="168" cy="312" r="3.73"/><circle cx="180" cy="312" r="2.00"/><circle cx="192" cy="312" r="2.27"/><circle cx="204" cy="312" r="2.53"/><circle cx="216" cy="312" r="2.80"/><circle cx="228" cy="312" r="3.07"/><circle cx="240" cy="312" r="3.33"/><circle cx="252" cy="312" r="3.60"/><circle cx="264" cy="312" r="3.87"/><circle cx="276" cy="312" r="2.13"/><circle cx="288" cy="312" r="2.40"/><circle cx="300" cy="312" r="2.67"/><circle cx="312" cy="312" r="2.93"/><circle cx="324" cy="312" r="3.20"/><circle cx="336" cy="312" r="3.47"/><circle cx="348" cy="312" r="3.73"/><circle cx="360" cy="312" r="2.00"/><circle cx="372" cy="312" r="2.27"/><circle cx="384" cy="312" r="2.53"/><circle cx="396" cy="312" r="2.80"/><circle cx="408" cy="312" r="3.07"/><circle cx="420" cy="312" r="3.33"/><circle cx="432" cy="312" r="3.60"/><circle cx="444" cy="312" r="3.87"/><circle cx="456" cy="312" r="2.13"/><circle cx="468" cy="312" r="2.40"/><circle cx="480" cy="312" r="2.67"/><circle cx="492" cy="312" r="2.93"/><circle cx="504" cy="312" r="3.20"/><circle cx="0" cy="324" r="2.00"/><circle cx="12" cy="324" r="2.27"/><circle cx="24" cy="324" r="2.53"/><circle cx="36" cy="324" r="2.80"/><circle cx="48" cy="324" r="3.07"/><circle cx="60" cy="324" r="3.33"/><circle cx="72" cy="324" r="3.60"/><circle cx="84" cy="324" r="3.87"/><circle cx="96" cy="324" r="2.13"/><circle cx="108" cy="324" r="2.40"/><circle cx="120" cy="324" r="2.67"/><circle cx="132" cy="324" r="2.93"/><circle cx="144" cy="324" r="3.20"/><circle cx="156" cy="324" r="3.47"/><circle cx="168" cy="324" r="3.73"/><circle cx="180" cy="324" r="2.00"/><circle cx="192" cy="324" r="2.27"/><circle cx="204" cy="324" r="2.53"/><circle cx="216" cy="324" r="2.80"/><circle cx="228" cy="324" r="3.07"/><circle cx="240" cy="324" r="3.33"/><circle cx="252" cy="324" r="3.60"/><circle cx="264" cy="324" r="3.87"/><circle cx="276" cy="324" r="2.13"/><circle cx="288" cy="324" r="2.40"/><circle cx="300" cy="324" r="2.67"/><circle cx="312" cy="324" r="2.93"/><circle cx="324" cy="324" r="3.20"/><circle cx="336" cy="324" r="3.47"/><circle cx="348" cy="324" r="3.73"/><circle cx="360" cy="324" r="2.00"/><circle cx="372" cy="324" r="2.27"/><circle cx="384" cy="324" r="2.53"/><circle cx="396" cy="324" r="2.80"/><circle cx="408" cy="324" r="3.07"/><circle cx="420" cy="324" r="3.33"/><circle cx="432" cy="324" r="3.60"/><circle cx="444" cy="324" r="3.87"/><circle cx="456" cy="324" r="2.13"/><circle cx="468" cy="324" r="2.40"/><circle cx="480" cy="324" r="2.67"/><circle cx="492" cy="324" r="2.93"/><circle cx="504" cy="324" r="3.20"/><circle cx="0" cy="336" r="2.00"/><circle cx="12" cy="336" r="2.27"/><circle cx="24" cy="336" r="2.53"/><circle cx="36" cy="336" r="2.80"/><circle cx="48" cy="336" r="3.07"/><circle cx="60" cy="336" r="3.33"/><circle cx="72" cy="336" r="3.60"/><circle cx="84" cy="336" r="3.87"/><circle cx="96" cy="336" r="2.13"/><circle cx="108" cy="336" r="2.40"/><circle cx="120" cy="336" r="2.67"/><circle cx="132" cy="336" r="2.93"/><circle cx="144" cy="336" r="3.20"/><circle cx="156" cy="336" r="3.47"/><circle cx="168" cy="336" r="3.73"/><circle cx="180" cy="336" r="2.00"/><circle cx="192" cy="336" r="2.27"/><circle cx="204" cy="336" r="2.53"/><circle cx="216" cy="336" r="2.80"/><circle cx="228" cy="336" r="3.07"/><circle cx="240" cy="336" r="3.33"/><circle cx="252" cy="336" r="3.60"/><circle cx="264" cy="336" r="3.87"/><circle cx="276" cy="336" r="2.13"/><circle cx="288" cy="336" r="2.40"/><circle cx="300" cy="336" r="2.67"/><circle cx="312" cy="336" r="2.93"/><circle cx="324" cy="336" r="3.20"/><circle cx="336" cy="336" r="3.47"/><circle cx="348" cy="336" r="3.73"/><circle cx="360" cy="336" r="2.00"/><circle cx="372" cy="336" r="2.27"/><circle cx="384" cy="336" r="2.53"/><circle cx="396" cy="336" r="2.80"/><circle cx="408" cy="336" r="3.07"/><circle cx="420" cy="336" r="3.33"/><circle cx="432" cy="336" r="3.60"/><circle cx="444" cy="336" r="3.87"/><circle cx="456" cy="336" r="2.13"/><circle cx="468" cy="336" r="2.40"/><circle cx="480" cy="336" r="2.67"/><circle cx="492" cy="336" r="2.93"/><circle cx="504" cy="336" r="3.20"/><circle cx="0" cy="348" r="2.00"/><circle cx="12" cy="348" r="2.27"/><circle cx="24" cy="348" r="2.53"/><circle cx="36" cy="348" r="2.80"/><circle cx="48" cy="348" r="3.07"/><circle cx="60" cy="348" r="3.33"/><circle cx="72" cy="348" r="3.60"/><circle cx="84" cy="348" r="3.87"/><circle cx="96" cy="348" r="2.13"/><circle cx="108" cy="348" r="2.40"/><circle cx="120" cy="348" r="2.67"/><circle cx="132" cy="348" r="2.93"/><circle cx="144" cy="348" r="3.20"/><circle cx="156" cy="348" r="3.47"/><circle cx="168" cy="348" r="3.73"/><circle cx="180" cy="348" r="2.00"/><circle cx="192" cy="348" r="2.27"/><circle cx="204" cy="348" r="2.53"/><circle cx="216" cy="348" r="2.80"/><circle cx="228" cy="348" r="3.07"/><circle cx="240" cy="348" r="3.33"/><circle cx="252" cy="348" r="3.60"/><circle cx="264" cy="348" r="3.87"/><circle cx="276" cy="348" r="2.13"/><circle cx="288" cy="348" r="2.40"/><circle cx="300" cy="348" r="2.67"/><circle cx="312" cy="348" r="2.93"/><circle cx="324" cy="348" r="3.20"/><circle cx="336" cy="348" r="3.47"/><circle cx="348" cy="348" r="3.73"/><circle cx="360" cy="348" r="2.00"/><circle cx="372" cy="348" r="2.27"/><circle cx="384" cy="348" r="2.53"/><circle cx="396" cy="348" r="2.80"/><circle cx="408" cy="348" r="3.07"/><circle cx="420" cy="348" r="3.33"/><circle cx="432" cy="348" r="3.60"/><circle cx="444" cy="348" r="3.87"/><circle cx="456" cy="348" r="2.13"/><circle cx="468" cy="348" r="2.40"/><circle cx="480" cy="348" r="2.67"/><circle cx="492" cy="348" r="2.93"/><circle cx="504" cy="348" r="3.20"/><circle cx="0" cy="360" r="2.00"/><circle cx="12" cy="360" r="2.27"/><circle cx="24" cy="360" r="2.53"/><circle cx="36" cy="360" r="2.80"/><circle cx="48" cy="360" r="3.07"/><circle cx="60" cy="360" r="3.33"/><circle cx="72" cy="360" r="3.60"/><circle cx="84" cy="360" r="3.87"/><circle cx="96" cy="360" r="2.13"/><circle cx="108" cy="360" r="2.40"/><circle cx="120" cy="360" r="2.67"/><circle cx="132" cy="360" r="2.93"/><circle cx="144" cy="360" r="3.20"/><circle cx="156" cy="360" r="3.47"/><circle cx="168" cy="360" r="3.73"/><circle cx="180" cy="360" r="2.00"/><circle cx="192" cy="360" r="2.27"/><circle cx="204" cy="360" r="2.53"/><circle cx="216" cy="360" r="2.80"/><circle cx="228" cy="360" r="3.07"/><circle cx="240" cy="360" r="3.33"/><circle cx="252" cy="360" r="3.60"/><circle cx="264" cy="360" r="3.87"/><circle cx="276" cy="360" r="2.13"/><circle cx="288" cy="360" r="2.40"/><circle cx="300" cy="360" r="2.67"/><circle cx="312" cy="360" r="2.93"/><circle cx="324" cy="360" r="3.20"/><circle cx="336" cy="360" r="3.47"/><circle cx="348" cy="360" r="3.73"/><circle cx="360" cy="360" r="2.00"/><circle cx="372" cy="360" r="2.27"/><circle cx="384" cy="360" r="2.53"/><circle cx="396" cy="360" r="2.80"/><circle cx="408" cy="360" r="3.07"/><circle cx="420" cy="360" r="3.33"/><circle cx="432" cy="360" r="3.60"/><circle cx="444" cy="360" r="3.87"/><circle cx="456" cy="360" r="2.13"/><circle cx="468" cy="360" r="2.40"/><circle cx="480" cy="360" r="2.67"/><circle cx="492" cy="360" r="2.93"/><circle cx="504" cy="360" r="3.20"/><circle cx="0" cy="372" r="2.00"/><circle cx="12" cy="372" r="2.27"/><circle cx="24" cy="372" r="2.53"/><circle cx="36" cy="372" r="2.80"/><circle cx="48" cy="372" r="3.07"/><circle cx="60" cy="372" r="3.33"/><circle cx="72" cy="372" r="3.60"/><circle cx="84" cy="372" r="3.87"/><circle cx="96" cy="372" r="2.13"/><circle cx="108" cy="372" r="2.40"/><circle cx="120" cy="372" r="2.67"/><circle cx="132" cy="372" r="2.93"/><circle cx="144" cy="372" r="3.20"/><circle cx="156" cy="372" r="3.47"/><circle cx="168" cy="372" r="3.73"/><circle cx="180" cy="372" r="2.00"/><circle cx="192" cy="372" r="2.27"/><circle cx="204" cy="372" r="2.53"/><circle cx="216" cy="372" r="2.80"/><circle cx="228" cy="372" r="3.07"/><circle cx="240" cy="372" r="3.33"/><circle cx="252" cy="372" r="3.60"/><circle cx="264" cy="372" r="3.87"/><circle cx="276" cy="372" r="2.13"/><circle cx="288" cy="372" r="2.40"/><circle cx="300" cy="372" r="2.67"/><circle cx="312" cy="372" r="2.93"/><circle cx="324" cy="372" r="3.20"/><circle cx="336" cy="372" r="3.47"/><circle cx="348" cy="372" r="3.73"/><circle cx="360" cy="372" r="2.00"/><circle cx="372" cy="372" r="2.27"/><circle cx="384" cy="372" r="2.53"/><circle cx="396" cy="372" r="2.80"/><circle cx="408" cy="372" r="3.07"/><circle cx="420" cy="372" r="3.33"/><circle cx="432" cy="372" r="3.60"/><circle cx="444" cy="372" r="3.87"/><circle cx="456" cy="372" r="2.13"/><circle cx="468" cy="372" r="2.40"/><circle cx="480" cy="372" r="2.67"/><circle cx="492" cy="372" r="2.93"/><circle cx="504" cy="372" r="3.20"/><circle cx="0" cy="384" r="2.00"/><circle cx="12" cy="384" r="2.27"/><circle cx="24" cy="384" r="2.53"/><circle cx="36" cy="384" r="2.80"/><circle cx="48" cy="384" r="3.07"/><circle cx="60" cy="384" r="3.33"/><circle cx="72" cy="384" r="3.60"/><circle cx="84" cy="384" r="3.87"/><circle cx="96" cy="384" r="2.13"/><circle cx="108" cy="384" r="2.40"/><circle cx="120" cy="384" r="2.67"/><circle cx="132" cy="384" r="2.93"/><circle cx="144" cy="384" r="3.20"/><circle cx="156" cy="384" r="3.47"/><circle cx="168" cy="384" r="3.73"/><circle cx="180" cy="384" r="2.00"/><circle cx="192" cy="384" r="2.27"/><circle cx="204" cy="384" r="2.53"/><circle cx="216" cy="384" r="2.80"/><circle cx="228" cy="384" r="3.07"/><circle cx="240" cy="384" r="3.33"/><circle cx="252" cy="384" r="3.60"/><circle cx="264" cy="384" r="3.87"/><circle cx="276" cy="384" r="2.13"/><circle cx="288" cy="384" r="2.40"/><circle cx="300" cy="384" r="2.67"/><circle cx="312" cy="384" r="2.93"/><circle cx="324" cy="384" r="3.20"/><circle cx="336" cy="384" r="3.47"/><circle cx="348" cy="384" r="3.73"/><circle cx="360" cy="384" r="2.00"/><circle cx="372" cy="384" r="2.27"/><circle cx="384" cy="384" r="2.53"/><circle cx="396" cy="384" r="2.80"/><circle cx="408" cy="384" r="3.07"/><circle cx="420" cy="384" r="3.33"/><circle cx="432" cy="384" r="3.60"/><circle cx="444" cy="384" r="3.87"/><circle cx="456" cy="384" r="2.13"/><circle cx="468" cy="384" r="2.40"/><circle cx="480" cy="384" r="2.67"/><circle cx="492" cy="384" r="2.93"/><circle cx="504" cy="384" r="3.20"/><circle cx="0" cy="396" r="2.00"/><circle cx="12" cy="396" r="2.27"/><circle cx="24" cy="396" r="2.53"/><circle cx="36" cy="396" r="2.80"/><circle cx="48" cy="396" r="3.07"/><circle cx="60" cy="396" r="3.33"/><circle cx="72" cy="396" r="3.60"/><circle cx="84" cy="396" r="3.87"/><circle cx="96" cy="396" r="2.13"/><circle cx="108" cy="396" r="2.40"/><circle cx="120" cy="396" r="2.67"/><circle cx="132" cy="396" r="2.93"/><circle cx="144" cy="396" r="3.20"/><circle cx="156" cy="396" r="3.47"/><circle cx="168" cy="396" r="3.73"/><circle cx="180" cy="396" r="2.00"/><circle cx="192" cy="396" r="2.27"/><circle cx="204" cy="396" r="2.53"/><circle cx="216" cy="396" r="2.80"/><circle cx="228" cy="396" r="3.07"/><circle cx="240" cy="396" r="3.33"/><circle cx="252" cy="396" r="3.60"/><circle cx="264" cy="396" r="3.87"/><circle cx="276" cy="396" r="2.13"/><circle cx="288" cy="396" r="2.40"/><circle cx="300" cy="396" r="2.67"/><circle cx="312" cy="396" r="2.93"/><circle cx="324" cy="396" r="3.20"/><circle cx="336" cy="396" r="3.47"/><circle cx="348" cy="396" r="3.73"/><circle cx="360" cy="396" r="2.00"/><circle cx="372" cy="396" r="2.27"/><circle cx="384" cy="396" r="2.53"/><circle cx="396" cy="396" r="2.80"/><circle cx="408" cy="396" r="3.07"/><circle cx="420" cy="396" r="3.33"/><circle cx="432" cy="396" r="3.60"/><circle cx="444" cy="396" r="3.87"/><circle cx="456" cy="396" r="2.13"/><circle cx="468" cy="396" r="2.40"/><circle cx="480" cy="396" r="2.67"/><circle cx="492" cy="396" r="2.93"/><circle cx="504" cy="396" r="3.20"/><circle cx="0" cy="408" r="2.00"/><circle cx="12" cy="408" r="2.27"/><circle cx="24" cy="408" r="2.53"/><circle cx="36" cy="408" r="2.80"/><circle cx="48" cy="408" r="3.07"/><circle cx="60" cy="408" r="3.33"/><circle cx="72" cy="408" r="3.60"/><circle cx="84" cy="408" r="3.87"/><circle cx="96" cy="408" r="2.13"/><circle cx="108" cy="408" r="2.40"/><circle cx="120" cy="408" r="2.67"/><circle cx="132" cy="408" r="2.93"/><circle cx="144" cy="408" r="3.20"/><circle cx="156" cy="408" r="3.47"/><circle cx="168" cy="408" r="3.73"/><circle cx="180" cy="408" r="2.00"/><circle cx="192" cy="408" r="2.27"/><circle cx="204" cy="408" r="2.53"/><circle cx="216" cy="408" r="2.80"/><circle cx="228" cy="408" r="3.07"/><circle cx="240" cy="408" r="3.33"/><circle cx="252" cy="408" r="3.60"/><circle cx="264" cy="408" r="3.87"/><circle cx="276" cy="408" r="2.13"/><circle cx="288" cy="408" r="2.40"/><circle cx="300" cy="408" r="2.67"/><circle cx="312" cy="408" r="2.93"/><circle cx="324" cy="408" r="3.20"/><circle cx="336" cy="408" r="3.47"/><circle cx="348" cy="408" r="3.73"/><circle cx="360" cy="408" r="2.00"/><circle cx="372" cy="408" r="2.27"/><circle cx="384" cy="408" r="2.53"/><circle cx="396" cy="408" r="2.80"/><circle cx="408" cy="408" r="3.07"/><circle cx="420" cy="408" r="3.33"/><circle cx="432" cy="408" r="3.60"/><circle cx="444" cy="408" r="3.87"/><circle cx="456" cy="408" r="2.13"/><circle cx="468" cy="408" r="2.40"/><circle cx="480" cy="408" r="2.67"/><circle cx="492" cy="408" r="2.93"/><circle cx="504" cy="408" r="3.20"/><circle cx="0" cy="420" r="2.00"/><circle cx="12" cy="420" r="2.27"/><circle cx="24" cy="420" r="2.53"/><circle cx="36" cy="420" r="2.80"/><circle cx="48" cy="420" r="3.07"/><circle cx="60" cy="420" r="3.33"/><circle cx="72" cy="420" r="3.60"/><circle cx="84" cy="420" r="3.87"/><circle cx="96" cy="420" r="2.13"/><circle cx="108" cy="420" r="2.40"/><circle cx="120" cy="420" r="2.67"/><circle cx="132" cy="420" r="2.93"/><circle cx="144" cy="420" r="3.20"/><circle cx="156" cy="420" r="3.47"/><circle cx="168" cy="420" r="3.73"/><circle cx="180" cy="420" r="2.00"/><circle cx="192" cy="420" r="2.27"/><circle cx="204" cy="420" r="2.53"/><circle cx="216" cy="420" r="2.80"/><circle cx="228" cy="420" r="3.07"/><circle cx="240" cy="420" r="3.33"/><circle cx="252" cy="420" r="3.60"/><circle cx="264" cy="420" r="3.87"/><circle cx="276" cy="420" r="2.13"/><circle cx="288" cy="420" r="2.40"/><circle cx="300" cy="420" r="2.67"/><circle cx="312" cy="420" r="2.93"/><circle cx="324" cy="420" r="3.20"/><circle cx="336" cy="420" r="3.47"/><circle cx="348" cy="420" r="3.73"/><circle cx="360" cy="420" r="2.00"/><circle cx="372" cy="420" r="2.27"/><circle cx="384" cy="420" r="2.53"/><circle cx="396" cy="420" r="2.80"/><circle cx="408" cy="420" r="3.07"/><circle cx="420" cy="420" r="3.33"/><circle cx="432" cy="420" r="3.60"/><circle cx="444" cy="420" r="3.87"/><circle cx="456" cy="420" r="2.13"/><circle cx="468" cy="420" r="2.40"/><circle cx="480" cy="420" r="2.67"/><circle cx="492" cy="420" r="2.93"/><circle cx="504" cy="420" r="3.20"/><circle cx="0" cy="432" r="2.00"/><circle cx="12" cy="432" r="2.27"/><circle cx="24" cy="432" r="2.53"/><circle cx="36" cy="432" r="2.80"/><circle cx="48" cy="432" r="3.07"/><circle cx="60" cy="432" r="3.33"/><circle cx="72" cy="432" r="3.60"/><circle cx="84" cy="432" r="3.87"/><circle cx="96" cy="432" r="2.13"/><circle cx="108" cy="432" r="2.40"/><circle cx="120" cy="432" r="2.67"/><circle cx="132" cy="432" r="2.93"/><circle cx="144" cy="432" r="3.20"/><circle cx="156" cy="432" r="3.47"/><circle cx="168" cy="432" r="3.73"/><circle cx="180" cy="432" r="2.00"/><circle cx="192" cy="432" r="2.27"/><circle cx="204" cy="432" r="2.53"/><circle cx="216" cy="432" r="2.80"/><circle cx="228" cy="432" r="3.07"/><circle cx="240" cy="432" r="3.33"/><circle cx="252" cy="432" r="3.60"/><circle cx="264" cy="432" r="3.87"/><circle cx="276" cy="432" r="2.13"/><circle cx="288" cy="432" r="2.40"/><circle cx="300" cy="432" r="2.67"/><circle cx="312" cy="432" r="2.93"/><circle cx="324" cy="432" r="3.20"/><circle cx="336" cy="432" r="3.47"/><circle cx="348" cy="432" r="3.73"/><circle cx="360" cy="432" r="2.00"/><circle cx="372" cy="432" r="2.27"/><circle cx="384" cy="432" r="2.53"/><circle cx="396" cy="432" r="2.80"/><circle cx="408" cy="432" r="3.07"/><circle cx="420" cy="432" r="3.33"/><circle cx="432" cy="432" r="3.60"/><circle cx="444" cy="432" r="3.87"/><circle cx="456" cy="432" r="2.13"/><circle cx="468" cy="432" r="2.40"/><circle cx="480" cy="432" r="2.67"/><circle cx="492" cy="432" r="2.93"/><circle cx="504" cy="432" r="3.20"/><circle cx="0" cy="444" r="2.00"/><circle cx="12" cy="444" r="2.27"/><circle cx="24" cy="444" r="2.53"/><circle cx="36" cy="444" r="2.80"/><circle cx="48" cy="444" r="3.07"/><circle cx="60" cy="444" r="3.33"/><circle cx="72" cy="444" r="3.60"/><circle cx="84" cy="444" r="3.87"/><circle cx="96" cy="444" r="2.13"/><circle cx="108" cy="444" r="2.40"/><circle cx="120" cy="444" r="2.67"/><circle cx="132" cy="444" r="2.93"/><circle cx="144" cy="444" r="3.20"/><circle cx="156" cy="444" r="3.47"/><circle cx="168" cy="444" r="3.73"/><circle cx="180" cy="444" r="2.00"/><circle cx="192" cy="444" r="2.27"/><circle cx="204" cy="444" r="2.53"/><circle cx="216" cy="444" r="2.80"/><circle cx="228" cy="444" r="3.07"/><circle cx="240" cy="444" r="3.33"/><circle cx="252" cy="444" r="3.60"/><circle cx="264" cy="444" r="3.87"/><circle cx="276" cy="444" r="2.13"/><circle cx="288" cy="444" r="2.40"/><circle cx="300" cy="444" r="2.67"/><circle cx="312" cy="444" r="2.93"/><circle cx="324" cy="444" r="3.20"/><circle cx="336" cy="444" r="3.47"/><circle cx="348" cy="444" r="3.73"/><circle cx="360" cy="444" r="2.00"/><circle cx="372" cy="444" r="2.27"/><circle cx="384" cy="444" r="2.53"/><circle cx="396" cy="444" r="2.80"/><circle cx="408" cy="444" r="3.07"/><circle cx="420" cy="444" r="3.33"/><circle cx="432" cy="444" r="3.60"/><circle cx="444" cy="444" r="3.87"/><circle cx="456" cy="444" r="2.13"/><circle cx="468" cy="444" r="2.40"/><circle cx="480" cy="444" r="2.67"/><circle cx="492" cy="444" r="2.93"/><circle cx="504" cy="444" r="3.20"/><circle cx="0" cy="456" r="2.00"/><circle cx="12" cy="456" r="2.27"/><circle cx="24" cy="456" r="2.53"/><circle cx="36" cy="456" r="2.80"/><circle cx="48" cy="456" r="3.07"/><circle cx="60" cy="456" r="3.33"/><circle cx="72" cy="456" r="3.60"/><circle cx="84" cy="456" r="3.87"/><circle cx="96" cy="456" r="2.13"/><circle cx="108" cy="456" r="2.40"/><circle cx="120" cy="456" r="2.67"/><circle cx="132" cy="456" r="2.93"/><circle cx="144" cy="456" r="3.20"/><circle cx="156" cy="456" r="3.47"/><circle cx="168" cy="456" r="3.73"/><circle cx="180" cy="456" r="2.00"/><circle cx="192" cy="456" r="2.27"/><circle cx="204" cy="456" r="2.53"/><circle cx="216" cy="456" r="2.80"/><circle cx="228" cy="456" r="3.07"/><circle cx="240" cy="456" r="3.33"/><circle cx="252" cy="456" r="3.60"/><circle cx="264" cy="456" r="3.87"/><circle cx="276" cy="456" r="2.13"/><circle cx="288" cy="456" r="2.40"/><circle cx="300" cy="456" r="2.67"/><circle cx="312" cy="456" r="2.93"/><circle cx="324" cy="456" r="3.20"/><circle cx="336" cy="456" r="3.47"/><circle cx="348" cy="456" r="3.73"/><circle cx="360" cy="456" r="2.00"/><circle cx="372" cy="456" r="2.27"/><circle cx="384" cy="456" r="2.53"/><circle cx="396" cy="456" r="2.80"/><circle cx="408" cy="456" r="3.07"/><circle cx="420" cy="456" r="3.33"/><circle cx="432" cy="456" r="3.60"/><circle cx="444" cy="456" r="3.87"/><circle cx="456" cy="456" r="2.13"/><circle cx="468" cy="456" r="2.40"/><circle cx="480" cy="456" r="2.67"/><circle cx="492" cy="456" r="2.93"/><circle cx="504" cy="456" r="3.20"/><circle cx="0" cy="468" r="2.00"/><circle cx="12" cy="468" r="2.27"/><circle cx="24" cy="468" r="2.53"/><circle cx="36" cy="468" r="2.80"/><circle cx="48" cy="468" r="3.07"/><circle cx="60" cy="468" r="3.33"/><circle cx="72" cy="468" r="3.60"/><circle cx="84" cy="468" r="3.87"/><circle cx="96" cy="468" r="2.13"/><circle cx="108" cy="468" r="2.40"/><circle cx="120" cy="468" r="2.67"/><circle cx="132" cy="468" r="2.93"/><circle cx="144" cy="468" r="3.20"/><circle cx="156" cy="468" r="3.47"/><circle cx="168" cy="468" r="3.73"/><circle cx="180" cy="468" r="2.00"/><circle cx="192" cy="468" r="2.27"/><circle cx="204" cy="468" r="2.53"/><circle cx="216" cy="468" r="2.80"/><circle cx="228" cy="468" r="3.07"/><circle cx="240" cy="468" r="3.33"/><circle cx="252" cy="468" r="3.60"/><circle cx="264" cy="468" r="3.87"/><circle cx="276" cy="468" r="2.13"/><circle cx="288" cy="468" r="2.40"/><circle cx="300" cy="468" r="2.67"/><circle cx="312" cy="468" r="2.93"/><circle cx="324" cy="468" r="3.20"/><circle cx="336" cy="468" r="3.47"/><circle cx="348" cy="468" r="3.73"/><circle cx="360" cy="468" r="2.00"/><circle cx="372" cy="468" r="2.27"/><circle cx="384" cy="468" r="2.53"/><circle cx="396" cy="468" r="2.80"/><circle cx="408" cy="468" r="3.07"/><circle cx="420" cy="468" r="3.33"/><circle cx="432" cy="468" r="3.60"/><circle cx="444" cy="468" r="3.87"/><circle cx="456" cy="468" r="2.13"/><circle cx="468" cy="468" r="2.40"/><circle cx="480" cy="468" r="2.67"/><circle cx="492" cy="468" r="2.93"/><circle cx="504" cy="468" r="3.20"/><circle cx="0" cy="480" r="2.00"/><circle cx="12" cy="480" r="2.27"/><circle cx="24" cy="480" r="2.53"/><circle cx="36" cy="480" r="2.80"/><circle cx="48" cy="480" r="3.07"/><circle cx="60" cy="480" r="3.33"/><circle cx="72" cy="480" r="3.60"/><circle cx="84" cy="480" r="3.87"/><circle cx="96" cy="480" r="2.13"/><circle cx="108" cy="480" r="2.40"/><circle cx="120" cy="480" r="2.67"/><circle cx="132" cy="480" r="2.93"/><circle cx="144" cy="480" r="3.20"/><circle cx="156" cy="480" r="3.47"/><circle cx="168" cy="480" r="3.73"/><circle cx="180" cy="480" r="2.00"/><circle cx="192" cy="480" r="2.27"/><circle cx="204" cy="480" r="2.53"/><circle cx="216" cy="480" r="2.80"/><circle cx="228" cy="480" r="3.07"/><circle cx="240" cy="480" r="3.33"/><circle cx="252" cy="480" r="3.60"/><circle cx="264" cy="480" r="3.87"/><circle cx="276" cy="480" r="2.13"/><circle cx="288" cy="480" r="2.40"/><circle cx="300" cy="480" r="2.67"/><circle cx="312" cy="480" r="2.93"/><circle cx="324" cy="480" r="3.20"/><circle cx="336" cy="480" r="3.47"/><circle cx="348" cy="480" r="3.73"/><circle cx="360" cy="480" r="2.00"/><circle cx="372" cy="480" r="2.27"/><circle cx="384" cy="480" r="2.53"/><circle cx="396" cy="480" r="2.80"/><circle cx="408" cy="480" r="3.07"/><circle cx="420" cy="480" r="3.33"/><circle cx="432" cy="480" r="3.60"/><circle cx="444" cy="480" r="3.87"/><circle cx="456" cy="480" r="2.13"/><circle cx="468" cy="480" r="2.40"/><circle cx="480" cy="480" r="2.67"/><circle cx="492" cy="480" r="2.93"/><circle cx="504" cy="480" r="3.20"/><circle cx="0" cy="492" r="2.00"/><circle cx="12" cy="492" r="2.27"/><circle cx="24" cy="492" r="2.53"/><circle cx="36" cy="492" r="2.80"/><circle cx="48" cy="492" r="3.07"/><circle cx="60" cy="492" r="3.33"/><circle cx="72" cy="492" r="3.60"/><circle cx="84" cy="492" r="3.87"/><circle cx="96" cy="492" r="2.13"/><circle cx="108" cy="492" r="2.40"/><circle cx="120" cy="492" r="2.67"/><circle cx="132" cy="492" r="2.93"/><circle cx="144" cy="492" r="3.20"/><circle cx="156" cy="492" r="3.47"/><circle cx="168" cy="492" r="3.73"/><circle cx="180" cy="492" r="2.00"/><circle cx="192" cy="492" r="2.27"/><circle cx="204" cy="492" r="2.53"/><circle cx="216" cy="492" r="2.80"/><circle cx="228" cy="492" r="3.07"/><circle cx="240" cy="492" r="3.33"/><circle cx="252" cy="492" r="3.60"/><circle cx="264" cy="492" r="3.87"/><circle cx="276" cy="492" r="2.13"/><circle cx="288" cy="492" r="2.40"/><circle cx="300" cy="492" r="2.67"/><circle cx="312" cy="492" r="2.93"/><circle cx="324" cy="492" r="3.20"/><circle cx="336" cy="492" r="3.47"/><circle cx="348" cy="492" r="3.73"/><circle cx="360" cy="492" r="2.00"/><circle cx="372" cy="492" r="2.27"/><circle cx="384" cy="492" r="2.53"/><circle cx="396" cy="492" r="2.80"/><circle cx="408" cy="492" r="3.07"/><circle cx="420" cy="492" r="3.33"/><circle cx="432" cy="492" r="3.60"/><circle cx="444" cy="492" r="3.87"/><circle cx="456" cy="492" r="2.13"/><circle cx="468" cy="492" r="2.40"/><circle cx="480" cy="492" r="2.67"/><circle cx="492" cy="492" r="2.93"/><circle cx="504" cy="492" r="3.20"/><circle cx="0" cy="504" r="2.00"/><circle cx="12" cy="504" r="2.27"/><circle cx="24" cy="504" r="2.53"/><circle cx="36" cy="504" r="2.80"/><circle cx="48" cy="504" r="3.07"/><circle cx="60" cy="504" r="3.33"/><circle cx="72" cy="504" r="3.60"/><circle cx="84" cy="504" r="3.87"/><circle cx="96" cy="504" r="2.13"/><circle cx="108" cy="504" r="2.40"/><circle cx="120" cy="504" r="2.67"/><circle cx="132" cy="504" r="2.93"/><circle cx="144" cy="504" r="3.20"/><circle cx="156" cy="504" r="3.47"/><circle cx="168" cy="504" r="3.73"/><circle cx="180" cy="504" r="2.00"/><circle cx="192" cy="504" r="2.27"/><circle cx="204" cy="504" r="2.53"/><circle cx="216" cy="504" r="2.80"/><circle cx="228" cy="504" r="3.07"/><circle cx="240" cy="504" r="3.33"/><circle cx="252" cy="504" r="3.60"/><circle cx="264" cy="504" r="3.87"/><circle cx="276" cy="504" r="2.13"/><circle cx="288" cy="504" r="2.40"/><circle cx="300" cy="504" r="2.67"/><circle cx="312" cy="504" r="2.93"/><circle cx="324" cy="504" r="3.20"/><circle cx="336" cy="504" r="3.47"/><circle cx="348" cy="504" r="3.73"/><circle cx="360" cy="504" r="2.00"/><circle cx="372" cy="504" r="2.27"/><circle cx="384" cy="504" r="2.53"/><circle cx="396" cy="504" r="2.80"/><circle cx="408" cy="504" r="3.07"/><circle cx="420" cy="504" r="3.33"/><circle cx="432" cy="504" r="3.60"/><circle cx="444" cy="504" r="3.87"/><circle cx="456" cy="504" r="2.13"/><circle cx="468" cy="504" r="2.40"/><circle cx="480" cy="504" r="2.67"/><circle cx="492" cy="504" r="2.93"/><circle cx="504" cy="504" r="3.20"/></g></svg></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <a class="lockup" href="#top" aria-label="Zundra">
+      <svg class="brain" viewBox="0 0 512 512" aria-hidden="true"><use href="#brain"/></svg>
+      <svg class="wordmark" viewBox="0 0 609.11 204" role="img" aria-label="Zundra"><use href="#wordmark"/></svg>
+    </a>
+    <p>The name is from <em>zadania</em> — Polish for “tasks”. Apache-2.0 licensed; issues and pull requests are welcome.</p>
+    <div class="links">
+      <a href="https://github.com/mh-coder-1918/zundra">Repository</a>
+      <a href="https://github.com/mh-coder-1918/zundra/issues">Issues</a>
+      <a href="https://github.com/mh-coder-1918/zundra/blob/main/LICENSE">Licence</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

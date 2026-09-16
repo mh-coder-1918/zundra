@@ -111,6 +111,10 @@ struct MenuBarView: View {
         // and at 300 a long one wrapped to eight or nine lines. This is about
         // 64 characters a line, which brings the same task down to four.
         .frame(width: 520)
+        // The brand colour, in the one slot the panel had left neutral: whatever
+        // the Mac's own accent happened to be. Everything the panel spends a
+        // colour on deliberately is untouched — see `Brand`.
+        .tint(Brand.pink)
         .onAppear {
             launchAtLogin = LaunchAtLogin.isEnabled
             // Re-derive in case the app has been running since before midnight.
@@ -992,9 +996,12 @@ struct TaskRow: View {
         task.day == .longTerm ? .current : .longTerm
     }
 
-    /// The row's colour: the app's tint for ordinary tasks, a distinct one for
-    /// the planning task the app seeds each morning.
-    private var accent: Color { task.kind == .planning ? .orange : .accentColor }
+    /// The row's colour: the brand tint for ordinary tasks, a distinct one for
+    /// the planning task the app seeds each morning. `Brand.pink` by name and
+    /// not `.accentColor`, which reads the *system* accent and so ignores the
+    /// `.tint` the panel sets — a row's ▶ and its countdown have to be the same
+    /// colour as today's heading above them.
+    private var accent: Color { task.kind == .planning ? .orange : Brand.pink }
 
     /// The quadrant a click on the badge moves to: the first one when the row is
     /// untagged, the next one along otherwise, and untagged again after the last

@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "direction": "Pink Noise",
+  "colour": {
+    "white": "#FFFFFF",
+    "pink": "#FF3D95",
+    "ink": "#171217",
+    "blush": "#FFF0F6",
+    "berry": "#AC1552",
+    "grey": "#6B5D65",
+    "line": "#E4D8DF"
+  },
+  "logo": {
+    "primarySlantDegrees": 12,
+    "alternativeDegrees": [
+      0,
+      18
+    ],
+    "symbolSlantDegrees": 0
+  },
+  "type": {
+    "body": "system-ui, -apple-system, sans-serif",
+    "display": "Outlined supplied artwork",
+    "uiStyle": "upright"
+  },
+  "spacing": [
+    4,
+    8,
+    12,
+    16,
+    24,
+    32,
+    48,
+    64,
+    96
+  ],
+  "radius": {
+    "editorial": 0,
+    "customControl": 8,
+    "customPanel": 16
+  },
+  "motion": {
+    "feedbackMs": 120,
+    "panelMs": 180,
+    "campaignMs": 240,
+    "reducedMotion": "instant"
+  },
+  "productRules": {
+    "preserveAreaColours": true,
+    "preservePriorityMeaning": true,
+    "preserveOrangePlanTheDay": true,
+    "menuBarIcon": "existing monochrome template"
+  }
+}
