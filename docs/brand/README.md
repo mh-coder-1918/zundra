@@ -14,7 +14,7 @@ The visual half of the *Pink Noise / Edition 02* identity kit, reduced to the fi
 | Grey | `#6B5D65` | Secondary text. |
 | Line | `#E4D8DF` | Hairlines. |
 
-Dark text on hot pink, never white: white on `#FF3D95` is 3.31:1, which the kit reserves for decoration. `tokens.css` and `design-tokens.json` are the kit's own token files, copied unchanged.
+Text on pink is **white** — a house decision, and the one place this deviates from the kit, which specifies dark text there. White on `#FF3D95` measures 3.31:1: enough for large text (24px, or 18.7px bold) and for short bold UI labels, not enough for small running copy, so keep white-on-pink type big, bold or brief, and put anything longer on white or blush with berry for the links. The *mark* follows the surface: white on the pink banner and social card, and **ink** on the app icon, where a 16pt glyph needs every point of contrast it can get. `tokens.css` and `design-tokens.json` are the kit's own token files, copied unchanged.
 
 ## The wordmark already carries its slant
 

@@ -105,15 +105,15 @@
   .nav a { color: var(--muted); text-decoration: none; }
   .nav a:hover { color: var(--fg); }
   .nav .gh {
-    color: var(--ink); background: var(--pink);
+    color: var(--white); background: var(--pink);
     padding: 8px 14px; border-radius: var(--radius-control); font-weight: 650;
     transition: transform var(--step) ease;
   }
-  .nav .gh:hover { color: var(--ink); transform: translateX(2px); }
+  .nav .gh:hover { color: var(--white); transform: translateX(2px); }
   @media (max-width: 640px) { .nav .hide-sm { display: none; } }
 
   /* --- hero ------------------------------------------------------------ */
-  .hero { background: var(--pink); color: var(--ink); overflow: hidden; }
+  .hero { background: var(--pink); color: var(--white); overflow: hidden; }
   .hero .wrap {
     display: grid; grid-template-columns: minmax(0,1fr) minmax(0,420px);
     gap: 56px; align-items: center; padding-block: 56px 0;
@@ -138,9 +138,9 @@
   }
   .btn-solid { background: var(--ink); color: var(--white); }
   .btn-solid:hover { transform: translateY(-2px); }
-  .btn-ghost { border: 2px solid var(--ink); color: var(--ink); }
-  .btn-ghost:hover { background: rgba(23,18,23,.08); }
-  .hero .meta { margin: 22px 0 64px; font-size: 14.5px; opacity: .75; }
+  .btn-ghost { border: 2px solid var(--white); color: var(--white); }
+  .btn-ghost:hover { background: rgba(255,255,255,.14); }
+  .hero .meta { margin: 22px 0 64px; font-size: 15px; color: var(--white); opacity: .88; }
   .hero-art { align-self: end; justify-self: center; padding-top: 24px; }
   @media (max-width: 900px) {
     .hero .wrap { grid-template-columns: minmax(0,1fr); gap: 36px; padding-block: 56px 0; }
@@ -170,7 +170,7 @@
   .panel .pickers { display: flex; gap: 6px; margin-bottom: 10px; }
   .panel .days { display: flex; gap: 2px; background: var(--panel-field); border-radius: 6px; padding: 2px; flex: 1; }
   .panel .days span { flex: 1; text-align: center; padding: 3px 0; border-radius: 4px; color: var(--muted); font-size: 11px; }
-  .panel .days .on { background: var(--pink); color: var(--ink); font-weight: 700; }
+  .panel .days .on { background: var(--pink); color: var(--white); font-weight: 700; }
   .panel .lbtn {
     width: 26px; display: grid; place-items: center; border-radius: 6px;
     border: 1px solid color-mix(in srgb, #8E5CD9 45%, transparent); color: #8E5CD9; font-weight: 700; font-size: 11px;
@@ -210,8 +210,67 @@
   .panel .run { color: color-mix(in srgb, var(--muted) 75%, transparent); font-size: 11px; }
   .panel .clock { color: var(--pink); font-variant-numeric: tabular-nums; font-weight: 600; font-size: 11px; }
   .panel .clock.agent { color: #1B9A96; }
+  .panel .clock.plan { color: #E08C14; }
   .panel .lt { color: #8E5CD9; }
-  .figcap { margin: 14px 0 0; font-size: 12.5px; color: var(--ink); opacity: .7; text-align: center; }
+  .panel .chev { color: color-mix(in srgb, var(--muted) 70%, transparent); width: 9px; display: inline-block; }
+  .panel .caret {
+    display: inline-block; width: 1.5px; height: 12px; background: var(--pink);
+    vertical-align: -2px; margin-left: 1px;
+  }
+  /* A detail: the same panel, cropped to the part a feature is about. */
+  .panel.detail {
+    max-width: 100%; border-radius: var(--radius-panel); transform: none;
+    padding: 12px; box-shadow: 0 10px 30px rgba(23,18,23,.10);
+    border: 1px solid var(--rule);
+  }
+  .panel.detail hr { margin-inline: -12px; }
+  .panel .field.typing { color: var(--fg); }
+  .panel .field.search { display: flex; align-items: center; gap: 8px; color: var(--fg); }
+  .panel .field.search .key { margin-left: auto; font-size: 10px; color: var(--muted); }
+  .panel .row.editing .text {
+    background: var(--panel-field); border: 1px solid var(--pink); border-radius: 4px;
+    padding: 2px 6px; margin: -3px 0;
+  }
+  .panel .row.lifted {
+    background: var(--panel-bg); border-radius: 6px;
+    box-shadow: 0 6px 16px rgba(23,18,23,.22); position: relative; z-index: 1;
+  }
+  .panel .row.ghost { opacity: .45; }
+  .panel .row.done .text { text-decoration: line-through; color: var(--muted); }
+  /* A completed row is a record: no grip to drag it by, no circle to un-tick. */
+  .panel .row.done .grip, .panel .row.done .circle { visibility: hidden; }
+  .panel .row.done .cap { opacity: .6; }
+  .panel .drop-line { height: 2px; background: var(--pink); border-radius: 2px; margin: 2px 2px; }
+  .panel .head.target { background: color-mix(in srgb, var(--pink) 16%, transparent); border-radius: 6px; }
+  .panel .head .tally.open { background: rgba(30,158,90,.18); border-radius: 999px; padding: 1px 7px; }
+  .panel .undo {
+    display: flex; align-items: center; gap: 8px; margin: 8px -12px -12px; padding: 8px 12px;
+    background: var(--panel-field); color: var(--muted); border-radius: 0 0 var(--radius-panel) var(--radius-panel);
+  }
+  .panel .undo b { color: var(--fg); font-weight: 600; }
+  .panel .undo .link { margin-left: auto; color: var(--pink); font-weight: 650; }
+  .panel .menu {
+    margin: 4px 0 0 34px; padding: 4px; width: max-content; max-width: 100%;
+    background: var(--panel-bg); border: 1px solid var(--rule); border-radius: 7px;
+    box-shadow: 0 12px 28px rgba(23,18,23,.22);
+  }
+  .panel .menu div { display: flex; gap: 22px; padding: 4px 10px; border-radius: 4px; white-space: nowrap; }
+  .panel .menu div span { margin-left: auto; color: var(--muted); }
+  .panel .menu .sel { background: var(--pink); color: var(--white); }
+  .panel .menu .sel span { color: var(--white); }
+  .panel .menu hr { margin: 4px 2px; }
+  .panel .menu.right { margin-left: auto; margin-right: 4px; }
+  .panel .menubar {
+    display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+    background: linear-gradient(var(--fg), color-mix(in srgb, var(--fg) 88%, var(--pink)));
+    color: #FFF; border-radius: 7px; padding: 5px 10px; margin: -2px 0 0;
+    font-size: 11.5px;
+  }
+  .panel .menubar .glyph { width: 15px; height: 15px; color: #FFF; }
+  .panel .menubar .box { font-variant-numeric: tabular-nums; }
+  .panel .menubar .sys { opacity: .55; }
+
+  .figcap { margin: 14px 0 0; font-size: 12.5px; color: var(--white); opacity: .8; text-align: center; }
 
   /* --- generic sections ------------------------------------------------ */
   section { padding-block: 72px; }
@@ -238,18 +297,51 @@
   .spaces .wrap { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,320px); gap: 48px; align-items: center; }
   .switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--bg); border-radius: 10px; padding: 6px; border: 1px solid var(--rule); }
   .switch span { text-align: center; padding: 10px 0; border-radius: 7px; font-weight: 600; color: var(--muted); }
-  .switch .on { background: var(--pink); color: var(--ink); }
+  .switch .on { background: var(--pink); color: var(--white); }
   @media (max-width: 760px) { .spaces .wrap { grid-template-columns: minmax(0,1fr); gap: 28px; } }
 
-  .feats { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 34px 40px; margin-top: 40px; }
-  .feats h3 { display: flex; align-items: baseline; gap: 8px; }
-  .feats .key {
-    font: 600 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
-    background: var(--surface); border: 1px solid var(--rule); border-radius: 5px; padding: 1px 6px; color: var(--berry);
+  /* Nine features, one at a time: the title picks the part of the panel that
+     does it, and the drawing beside it is that part and nothing else. */
+  .tabs {
+    display: grid; grid-template-columns: 268px minmax(0,1fr); margin-top: 40px;
+    border: 1px solid var(--rule); border-radius: var(--radius-panel); overflow: hidden;
   }
-  .feats p { margin: 0; color: var(--muted); font-size: 15.5px; }
-  @media (max-width: 900px) { .feats { grid-template-columns: repeat(2, minmax(0,1fr)); } }
-  @media (max-width: 600px) { .feats { grid-template-columns: minmax(0,1fr); } }
+  .tablist {
+    display: flex; flex-direction: column; gap: 2px; padding: 10px;
+    background: var(--surface); border-right: 1px solid var(--rule);
+  }
+  .tablist button {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    appearance: none; border: 0; background: transparent; cursor: pointer;
+    font: inherit; font-size: 15px; text-align: left; color: var(--muted);
+    padding: 10px 12px; border-radius: var(--radius-control);
+    transition: background var(--step) ease, color var(--step) ease;
+  }
+  .tablist button:hover { color: var(--fg); background: color-mix(in srgb, var(--fg) 7%, transparent); }
+  .tablist button[aria-selected="true"] { background: var(--pink); color: var(--white); font-weight: 650; }
+  .tablist .key {
+    margin-left: auto; font: 600 11.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--berry);
+  }
+  .tablist button[aria-selected="true"] .key { color: var(--white); opacity: .85; }
+  /* A class-level `display` beats the UA's [hidden] rule, so say it again. */
+  .tabpanel[hidden] { display: none; }
+  .tabpanel { padding: 30px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,384px); gap: 32px; align-items: center; }
+  .tabpanel h3 { font-size: 1.32rem; margin-bottom: 10px; }
+  .tabpanel p { margin: 0; color: var(--muted); max-width: 46ch; }
+  .tabpanel .note { margin-top: 14px; font-size: 14px; color: var(--muted); }
+  .tabpanel .note b { color: var(--fg); font-weight: 600; }
+  @media (max-width: 1000px) { .tabpanel { grid-template-columns: minmax(0,1fr); gap: 26px; } }
+  @media (max-width: 760px) {
+    .tabs { grid-template-columns: minmax(0,1fr); }
+    .tablist {
+      flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--rule);
+      scrollbar-width: thin;
+    }
+    .tablist button { width: auto; white-space: nowrap; }
+    .tablist .key { display: none; }
+    .tabpanel { padding: 22px; }
+  }
 
   .build { background: var(--ink); color: var(--blush); }
   .build h2, .build h3 { color: var(--white); }
@@ -352,14 +444,14 @@
           </div>
           <div class="quads"><span class="q-now">!</span><span>↑</span><span>→</span><span>·</span></div>
           <hr>
-          <div class="head today"><span class="name">Tuesday</span><span class="count">· 4 tasks</span><span class="tally">✓ 3</span></div>
+          <div class="head today"><span class="chev">⌄</span><span class="name">Tuesday</span><span class="count">· 4 tasks</span><span class="tally">✓ 3</span></div>
           <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-off">!</span><span class="text plan">Plan the day</span><span class="clock">09:12</span></div>
           <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-now">!</span><span class="cap cap-sales">sales</span><span class="text">Send the proposal over</span><span class="run">▶</span></div>
           <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-now">!</span><span class="cap cap-sales">sales</span><span class="text">Follow up on last week's call</span><span class="clock agent">47:30</span></div>
           <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-sched">↑</span><span class="cap cap-admin">admin</span><span class="text">File August's receipts</span><span class="run">▶</span></div>
-          <div class="head"><span class="name">Wednesday</span><span class="count">· 1 task</span><span class="tally">✓ 1</span></div>
+          <div class="head"><span class="chev">⌄</span><span class="name">Wednesday</span><span class="count">· 1 task</span><span class="tally">✓ 1</span></div>
           <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-del">→</span><span class="cap cap-hiring">hiring</span><span class="text">Brief the recruiter</span><span class="run">▶</span></div>
-          <div class="head lt"><span class="name lt">Long-term</span><span class="count">· 6 tasks</span></div>
+          <div class="head lt"><span class="chev">⌄</span><span class="name lt">Long-term</span><span class="count">· 6 tasks</span></div>
         </div>
         <figcaption class="figcap">A drawing of the panel, not a screenshot.</figcaption>
       </figure>
@@ -413,42 +505,166 @@
     <div class="wrap">
       <p class="kicker">What's in the panel</p>
       <h2>Small, and finished.</h2>
-      <div class="feats">
-        <div>
-          <h3>Instant capture</h3>
-          <p>Click the icon, type, press Return. The field clears and stays focused, so you can add several in a row.</p>
+      <div class="prose"><p class="muted">Nine things the panel does. Pick one and the drawing beside it is the part of the panel that does it.</p></div>
+
+      <div class="tabs">
+        <div class="tablist" role="tablist" aria-label="Features">
+          <button role="tab" id="t-capture" aria-controls="p-capture" aria-selected="true" tabindex="0">Instant capture</button>
+          <button role="tab" id="t-edit" aria-controls="p-edit" aria-selected="false" tabindex="-1">Edit in place</button>
+          <button role="tab" id="t-drag" aria-controls="p-drag" aria-selected="false" tabindex="-1">Drag to reorder</button>
+          <button role="tab" id="t-tally" aria-controls="p-tally" aria-selected="false" tabindex="-1">Done tallies</button>
+          <button role="tab" id="t-delete" aria-controls="p-delete" aria-selected="false" tabindex="-1">Delete, properly</button>
+          <button role="tab" id="t-search" aria-controls="p-search" aria-selected="false" tabindex="-1">Search <span class="key">⌘F</span></button>
+          <button role="tab" id="t-fold" aria-controls="p-fold" aria-selected="false" tabindex="-1">Collapsible days</button>
+          <button role="tab" id="t-plan" aria-controls="p-plan" aria-selected="false" tabindex="-1">“Plan the day”</button>
+          <button role="tab" id="t-hotkey" aria-controls="p-hotkey" aria-selected="false" tabindex="-1">Global shortcut <span class="key">⌃⌥⌘T</span></button>
         </div>
-        <div>
-          <h3>Edit in place</h3>
-          <p>Click a task's text and change it; edits save on Return or when you click away.</p>
+
+        <div class="tabpanel" role="tabpanel" id="p-capture" aria-labelledby="t-capture" tabindex="0">
+          <div>
+            <h3>Instant capture</h3>
+            <p>Click the icon, type, press Return. The field clears and stays focused, so you can add several in a row.</p>
+            <p class="note">Start the text with <b>#admin</b> and it becomes an area instead of part of the task. The day picker aims the next capture somewhere other than today; the four buttons under it aim a quadrant.</p>
+          </div>
+          <div class="panel detail">
+            <div class="field typing">Send the proposal over<span class="caret"></span></div>
+            <div class="pickers">
+              <div class="days"><span>Mon</span><span class="on">Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+              <div class="lbtn">L</div>
+            </div>
+            <div class="quads"><span class="q-now">!</span><span>↑</span><span>→</span><span>·</span></div>
+          </div>
         </div>
-        <div>
-          <h3>Drag to reorder or reschedule</h3>
-          <p>Grab a task by its grip handle and drag it within a day, or onto another day's heading to move it there. Dragging across quadrants retags the row to match where you dropped it.</p>
+
+        <div class="tabpanel" role="tabpanel" id="p-edit" aria-labelledby="t-edit" tabindex="0" hidden>
+          <div>
+            <h3>Edit in place</h3>
+            <p>Click a task's text and change it; edits save on Return or when you click away.</p>
+            <p class="note">Clearing a row puts the old text back — <b>deleting is the row's menu</b>, never an empty field.</p>
+          </div>
+          <div class="panel detail">
+            <div class="head today"><span class="chev">⌄</span><span class="name">Tuesday</span><span class="count">· 2 tasks</span></div>
+            <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-now">!</span><span class="cap cap-sales">sales</span><span class="text">Send the proposal over</span><span class="run">▶</span></div>
+            <div class="row editing"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-sched">↑</span><span class="cap cap-admin">admin</span><span class="text">File August's receipts<span class="caret"></span></span></div>
+          </div>
         </div>
-        <div>
-          <h3>Done tallies</h3>
-          <p>Each day heading shows what's left plus a green ✓ count of what you finished there this week. Click the tally to list those tasks, struck through, under the heading.</p>
+
+        <div class="tabpanel" role="tabpanel" id="p-drag" aria-labelledby="t-drag" tabindex="0" hidden>
+          <div>
+            <h3>Drag to reorder or reschedule</h3>
+            <p>Grab a task by its grip handle and drag it within a day, or onto another day's heading to move it there.</p>
+            <p class="note">Dragging across quadrants <b>retags</b> the row to match where you dropped it — otherwise it would spring back the moment you let go. An area never changes that way: that one you type.</p>
+          </div>
+          <div class="panel detail">
+            <div class="head today"><span class="chev">⌄</span><span class="name">Tuesday</span><span class="count">· 3 tasks</span></div>
+            <div class="row ghost"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-now">!</span><span class="cap cap-sales">sales</span><span class="text">Send the proposal over</span><span class="run">▶</span></div>
+            <div class="drop-line"></div>
+            <div class="row lifted"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-sched">↑</span><span class="cap cap-admin">admin</span><span class="text">File August's receipts</span><span class="run">▶</span></div>
+            <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-none">!</span><span class="text">Read the pilot-regime notes</span><span class="run">▶</span></div>
+            <div class="head target"><span class="chev">⌄</span><span class="name">Wednesday</span><span class="count">· 1 task</span></div>
+          </div>
         </div>
-        <div>
-          <h3>Delete, properly</h3>
-          <p>A task captured by mistake isn't <em>done</em>, and marking it done would inflate the tally you're meant to trust. Both delete and complete give you about four seconds to undo.</p>
+
+        <div class="tabpanel" role="tabpanel" id="p-tally" aria-labelledby="t-tally" tabindex="0" hidden>
+          <div>
+            <h3>Done tallies</h3>
+            <p>Each day heading shows what's left plus a green ✓ count of what you finished there this week. Click the tally to list those tasks, struck through, under the heading.</p>
+            <p class="note">The count is credited to the task's <b>day</b>, not the day you ticked it, so the number matches the rows that vanished from that heading. It resets when the week does.</p>
+          </div>
+          <div class="panel detail">
+            <div class="head today"><span class="chev">⌄</span><span class="name">Tuesday</span><span class="count">· 1 task</span><span class="tally open">✓ 3</span></div>
+            <div class="row done"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-now">!</span><span class="cap cap-sales">sales</span><span class="text">Send the proposal over</span></div>
+            <div class="row done"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-sched">↑</span><span class="cap cap-admin">admin</span><span class="text">Call the bank about the invoice</span></div>
+            <div class="row done"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-none">!</span><span class="text">Read the pilot-regime notes</span></div>
+            <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-del">→</span><span class="cap cap-hiring">hiring</span><span class="text">Brief the recruiter</span><span class="run">▶</span></div>
+          </div>
         </div>
-        <div>
-          <h3>Search <span class="key">⌘F</span></h3>
-          <p>The week is replaced by the matches. Space-separated terms all have to match, in any order, across the text and the <code>#area</code>.</p>
+
+        <div class="tabpanel" role="tabpanel" id="p-delete" aria-labelledby="t-delete" tabindex="0" hidden>
+          <div>
+            <h3>Delete, properly</h3>
+            <p>Right-click a row and delete it. A task captured by mistake isn't <em>done</em>, and marking it done would inflate the tally you're meant to trust.</p>
+            <p class="note">Deleting credits no tally and writes no archive entry. Both delete and complete give you about <b>four seconds</b> to undo.</p>
+          </div>
+          <div class="panel detail">
+            <div class="head today"><span class="chev">⌄</span><span class="name">Tuesday</span><span class="count">· 2 tasks</span></div>
+            <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-now">!</span><span class="cap cap-sales">sales</span><span class="text">Send the proposal over</span><span class="run">▶</span></div>
+            <div class="menu">
+              <div>Do now<span>!</span></div>
+              <div>Schedule<span>↑</span></div>
+              <hr>
+              <div>Move to Long-term</div>
+              <div>Move to Personal</div>
+              <hr>
+              <div class="sel">Delete</div>
+            </div>
+            <div class="undo"><b>Deleted “Call the bank”</b><span class="link">Undo</span></div>
+          </div>
         </div>
-        <div>
-          <h3>Collapsible days</h3>
-          <p>Click a day heading to fold it shut; the choice is remembered per space.</p>
+
+        <div class="tabpanel" role="tabpanel" id="p-search" aria-labelledby="t-search" tabindex="0" hidden>
+          <div>
+            <h3>Search</h3>
+            <p>Press <b>⌘F</b> and the week is replaced by the matches. Space-separated terms all have to match, in any order, across the text and the <code>#area</code>.</p>
+            <p class="note">Word order is the thing nobody remembers, so “bank call” finds “Call the bank about the invoice”. The field isn't there until ⌘F asks for it, and it goes away with the panel.</p>
+          </div>
+          <div class="panel detail">
+            <div class="field search">bank call<span class="key">⌘F</span></div>
+            <hr>
+            <div class="head"><span class="name">Monday</span></div>
+            <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-sched">↑</span><span class="cap cap-admin">admin</span><span class="text">Call the bank about the invoice</span><span class="run">▶</span></div>
+            <div class="head"><span class="name lt">Long-term</span></div>
+            <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-del">·</span><span class="text">Bank holiday cover — call Ana</span><span class="run">▶</span></div>
+          </div>
         </div>
-        <div>
-          <h3>“Plan the day”</h3>
-          <p>A distinct orange task appears once each morning at the top of today, in the Work space. Tick it, edit it or delete it and it stays gone until tomorrow.</p>
+
+        <div class="tabpanel" role="tabpanel" id="p-fold" aria-labelledby="t-fold" tabindex="0" hidden>
+          <div>
+            <h3>Collapsible days</h3>
+            <p>Click a day heading to fold it shut; the choice is remembered per space.</p>
+            <p class="note">The rows go, the counts stay — so a shut day still says how much is in it. A task dragged onto a folded day <b>unfolds it</b>, so you see it arrive.</p>
+          </div>
+          <div class="panel detail">
+            <div class="head"><span class="chev">›</span><span class="name">Monday</span><span class="count">· 4 tasks</span><span class="tally">✓ 2</span></div>
+            <div class="head today"><span class="chev">⌄</span><span class="name">Tuesday</span><span class="count">· 2 tasks</span><span class="tally">✓ 3</span></div>
+            <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-now">!</span><span class="cap cap-sales">sales</span><span class="text">Send the proposal over</span><span class="run">▶</span></div>
+            <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-sched">↑</span><span class="cap cap-admin">admin</span><span class="text">File August's receipts</span><span class="run">▶</span></div>
+            <div class="head"><span class="chev">›</span><span class="name">Wednesday</span><span class="count">· 1 task</span></div>
+          </div>
         </div>
-        <div>
-          <h3>Global shortcut <span class="key">⌃⌥⌘T</span></h3>
-          <p>Right-click the icon to enable a system-wide shortcut that opens Zundra from any app. Off by default, and it needs no Accessibility permission.</p>
+
+        <div class="tabpanel" role="tabpanel" id="p-plan" aria-labelledby="t-plan" tabindex="0" hidden>
+          <div>
+            <h3>“Plan the day”</h3>
+            <p>A distinct orange task appears once each morning at the top of today, in the Work space. Tick it, edit it or delete it and it stays gone until tomorrow.</p>
+            <p class="note">It is pinned above every quadrant rather than sorted with them, and its box runs <b>10 minutes</b> instead of 20. The Personal space is never handed a chore.</p>
+          </div>
+          <div class="panel detail">
+            <div class="head today"><span class="chev">⌄</span><span class="name">Tuesday</span><span class="count">· 3 tasks</span></div>
+            <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-off">!</span><span class="text plan">Plan the day</span><span class="clock plan">09:41</span></div>
+            <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-now">!</span><span class="cap cap-sales">sales</span><span class="text">Send the proposal over</span><span class="run">▶</span></div>
+            <div class="row"><span class="grip">≡</span><span class="circle">○</span><span class="badge b-sched">↑</span><span class="cap cap-admin">admin</span><span class="text">File August's receipts</span><span class="run">▶</span></div>
+          </div>
+        </div>
+
+        <div class="tabpanel" role="tabpanel" id="p-hotkey" aria-labelledby="t-hotkey" tabindex="0" hidden>
+          <div>
+            <h3>Global shortcut</h3>
+            <p>Right-click the icon to enable a system-wide <b>⌃⌥⌘T</b> that opens Zundra from any app. Off by default, and it needs no Accessibility permission.</p>
+            <p class="note">While a box is running, the menu bar carries its countdown beside the glyph — the one finishing first, if several are going at once.</p>
+          </div>
+          <div class="panel detail">
+            <div class="menubar">
+              <svg class="glyph" viewBox="0 0 512 512" aria-hidden="true"><use href="#brain"/></svg>
+              <span class="box">12:04</span>
+              <span class="sys">Tue 09:41</span>
+            </div>
+            <div class="menu right">
+              <div class="sel">✓&nbsp; Open Zundra<span>⌃⌥⌘T</span></div>
+              <hr>
+              <div>Quit Zundra</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -529,6 +745,41 @@
     </div>
   </div>
 </footer>
+
+<script>
+  // The features section is one tab strip: each title shows the part of the
+  // panel that does that job. Arrow keys walk the list, as a tablist should.
+  (function () {
+    var list = document.querySelector('.tablist');
+    if (!list) return;
+    var tabs = Array.prototype.slice.call(list.querySelectorAll('[role="tab"]'));
+    function select(tab) {
+      tabs.forEach(function (t) {
+        var on = t === tab;
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+        t.tabIndex = on ? 0 : -1;
+        var panel = document.getElementById(t.getAttribute('aria-controls'));
+        if (panel) panel.hidden = !on;
+      });
+    }
+    list.addEventListener('click', function (e) {
+      var t = e.target.closest('[role="tab"]');
+      if (t) select(t);
+    });
+    list.addEventListener('keydown', function (e) {
+      var i = tabs.indexOf(document.activeElement), n = null;
+      if (i < 0) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') n = (i + 1) % tabs.length;
+      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') n = (i - 1 + tabs.length) % tabs.length;
+      if (e.key === 'Home') n = 0;
+      if (e.key === 'End') n = tabs.length - 1;
+      if (n === null) return;
+      e.preventDefault();
+      tabs[n].focus();
+      select(tabs[n]);
+    });
+  })();
+</script>
 
 </body>
 </html>
