@@ -259,16 +259,6 @@
   .panel .menu .sel { background: var(--pink); color: var(--white); }
   .panel .menu .sel span { color: var(--white); }
   .panel .menu hr { margin: 4px 2px; }
-  .panel .menu.right { margin-left: auto; margin-right: 4px; }
-  .panel .menubar {
-    display: flex; align-items: center; justify-content: flex-end; gap: 10px;
-    background: linear-gradient(var(--fg), color-mix(in srgb, var(--fg) 88%, var(--pink)));
-    color: #FFF; border-radius: 7px; padding: 5px 10px; margin: -2px 0 0;
-    font-size: 11.5px;
-  }
-  .panel .menubar .glyph { width: 15px; height: 15px; color: #FFF; }
-  .panel .menubar .box { font-variant-numeric: tabular-nums; }
-  .panel .menubar .sys { opacity: .55; }
 
   .figcap { margin: 14px 0 0; font-size: 12.5px; color: var(--white); opacity: .8; text-align: center; }
 
@@ -287,13 +277,15 @@
   .prose { max-width: 62ch; }
   .muted { color: var(--muted); }
 
+  /* The week's four ideas sit on the tinted band, so the tabs above and the
+     spaces below them each keep a plain ground. */
+  .why { background: var(--surface); }
   .four { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1px; background: var(--rule); margin-top: 40px; }
   .four > div { background: var(--bg); padding: 28px 26px 30px; }
   .four .mark { display: block; width: 26px; height: 3px; background: var(--pink); margin-bottom: 18px; }
   .four p { margin: 0; color: var(--muted); font-size: 15.5px; }
   @media (max-width: 720px) { .four { grid-template-columns: minmax(0,1fr); } }
 
-  .spaces { background: var(--surface); }
   .spaces .wrap { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,320px); gap: 48px; align-items: center; }
   .switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--bg); border-radius: 10px; padding: 6px; border: 1px solid var(--rule); }
   .switch span { text-align: center; padding: 10px 0; border-radius: 7px; font-weight: 600; color: var(--muted); }
@@ -412,8 +404,8 @@
       <svg class="wordmark" viewBox="0 0 609.11 204" role="img" aria-label="Zundra"><use href="#wordmark"/></svg>
     </a>
     <nav class="nav">
-      <a class="hide-sm" href="#why">Why</a>
       <a class="hide-sm" href="#features">Features</a>
+      <a class="hide-sm" href="#why">Why</a>
       <a class="hide-sm" href="#build">Build it</a>
       <a class="gh" href="https://github.com/mh-coder-1918/zundra">View on GitHub ↗</a>
     </nav>
@@ -458,54 +450,11 @@
     </div>
   </section>
 
-  <section id="why">
-    <div class="wrap">
-      <p class="kicker">Why another to-do app</p>
-      <h2>Four ordinary ideas, one click each.</h2>
-      <div class="prose">
-        <p class="muted">Most to-do apps are a flat list, which is fine until the list is forty items long and every one of them looks equally urgent. Zundra puts four ordinary ideas about getting things done into one small panel, and makes them cost one click each.</p>
-      </div>
-      <div class="four">
-        <div>
-          <span class="mark"></span>
-          <h3>The week, not the day</h3>
-          <p>The list is split Monday→Sunday, so a task has a day rather than a vague someday. Anything that genuinely isn't for this week goes in a separate long-term bucket instead of rotting at the bottom.</p>
-        </div>
-        <div>
-          <span class="mark"></span>
-          <h3>The Eisenhower matrix, as one character</h3>
-          <p>Each task carries an optional <strong>!</strong> (do now), <strong>↑</strong> (schedule), <strong>→</strong> (delegate) or <strong>·</strong> (drop). Click to cycle it. The badge also <em>orders the day</em>, so triaging a list rearranges it.</p>
-        </div>
-        <div>
-          <span class="mark"></span>
-          <h3>Your own areas</h3>
-          <p>Type <code>#admin</code> at the start of a task and it becomes a coloured capsule instead of part of the text. Areas are your words, made by using them — no list to set up, none to maintain, and each one keeps a distinct colour for good.</p>
-        </div>
-        <div>
-          <span class="mark"></span>
-          <h3>Timeboxing</h3>
-          <p>Press ▶ on a task for a 20-minute focus box, or ✨ for a 60-minute box for something you've handed off and are waiting on. Several can run at once; the one finishing first shows next to the menu-bar icon.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="spaces">
-    <div class="wrap">
-      <div class="prose">
-        <p class="kicker">Personal / Work</p>
-        <h2>Two weeks, side by side.</h2>
-        <p class="muted">Two spaces keep two weeks apart, each with its own days, tallies and fold state, so an evening's list never gets crowded out by a work one. The switch sits at the top of the panel, and everything below it belongs to the space on show.</p>
-      </div>
-      <div class="switch" aria-hidden="true"><span>Personal</span><span class="on">Work</span></div>
-    </div>
-  </section>
-
   <section id="features">
     <div class="wrap">
       <p class="kicker">What's in the panel</p>
       <h2>Small, and finished.</h2>
-      <div class="prose"><p class="muted">Nine things the panel does. Pick one and the drawing beside it is the part of the panel that does it.</p></div>
+      <div class="prose"><p class="muted">Eight things the panel does. Pick one and the drawing beside it is the part of the panel that does it.</p></div>
 
       <div class="tabs">
         <div class="tablist" role="tablist" aria-label="Features">
@@ -517,7 +466,6 @@
           <button role="tab" id="t-search" aria-controls="p-search" aria-selected="false" tabindex="-1">Search <span class="key">⌘F</span></button>
           <button role="tab" id="t-fold" aria-controls="p-fold" aria-selected="false" tabindex="-1">Collapsible days</button>
           <button role="tab" id="t-plan" aria-controls="p-plan" aria-selected="false" tabindex="-1">“Plan the day”</button>
-          <button role="tab" id="t-hotkey" aria-controls="p-hotkey" aria-selected="false" tabindex="-1">Global shortcut <span class="key">⌃⌥⌘T</span></button>
         </div>
 
         <div class="tabpanel" role="tabpanel" id="p-capture" aria-labelledby="t-capture" tabindex="0">
@@ -647,28 +595,53 @@
           </div>
         </div>
 
-        <div class="tabpanel" role="tabpanel" id="p-hotkey" aria-labelledby="t-hotkey" tabindex="0" hidden>
-          <div>
-            <h3>Global shortcut</h3>
-            <p>Right-click the icon to enable a system-wide <b>⌃⌥⌘T</b> that opens Zundra from any app. Off by default, and it needs no Accessibility permission.</p>
-            <p class="note">While a box is running, the menu bar carries its countdown beside the glyph — the one finishing first, if several are going at once.</p>
-          </div>
-          <div class="panel detail">
-            <div class="menubar">
-              <svg class="glyph" viewBox="0 0 512 512" aria-hidden="true"><use href="#brain"/></svg>
-              <span class="box">12:04</span>
-              <span class="sys">Tue 09:41</span>
-            </div>
-            <div class="menu right">
-              <div class="sel">✓&nbsp; Open Zundra<span>⌃⌥⌘T</span></div>
-              <hr>
-              <div>Quit Zundra</div>
-            </div>
-          </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="why" class="why">
+    <div class="wrap">
+      <p class="kicker">Why another to-do app</p>
+      <h2>Four ordinary ideas, one click each.</h2>
+      <div class="prose">
+        <p class="muted">Most to-do apps are a flat list, which is fine until the list is forty items long and every one of them looks equally urgent. Zundra puts four ordinary ideas about getting things done into one small panel, and makes them cost one click each.</p>
+      </div>
+      <div class="four">
+        <div>
+          <span class="mark"></span>
+          <h3>The week, not the day</h3>
+          <p>The list is split Monday→Sunday, so a task has a day rather than a vague someday. Anything that genuinely isn't for this week goes in a separate long-term bucket instead of rotting at the bottom.</p>
+        </div>
+        <div>
+          <span class="mark"></span>
+          <h3>The Eisenhower matrix, as one character</h3>
+          <p>Each task carries an optional <strong>!</strong> (do now), <strong>↑</strong> (schedule), <strong>→</strong> (delegate) or <strong>·</strong> (drop). Click to cycle it. The badge also <em>orders the day</em>, so triaging a list rearranges it.</p>
+        </div>
+        <div>
+          <span class="mark"></span>
+          <h3>Your own areas</h3>
+          <p>Type <code>#admin</code> at the start of a task and it becomes a coloured capsule instead of part of the text. Areas are your words, made by using them — no list to set up, none to maintain, and each one keeps a distinct colour for good.</p>
+        </div>
+        <div>
+          <span class="mark"></span>
+          <h3>Timeboxing</h3>
+          <p>Press ▶ on a task for a 20-minute focus box, or ✨ for a 60-minute box for something you've handed off and are waiting on. Several can run at once; the one finishing first shows next to the menu-bar icon.</p>
         </div>
       </div>
     </div>
   </section>
+
+  <section class="spaces">
+    <div class="wrap">
+      <div class="prose">
+        <p class="kicker">Personal / Work</p>
+        <h2>Two weeks, side by side.</h2>
+        <p class="muted">Two spaces keep two weeks apart, each with its own days, tallies and fold state, so an evening's list never gets crowded out by a work one. The switch sits at the top of the panel, and everything below it belongs to the space on show.</p>
+      </div>
+      <div class="switch" aria-hidden="true"><span>Personal</span><span class="on">Work</span></div>
+    </div>
+  </section>
+
 
   <section class="build" id="build">
     <div class="wrap">
